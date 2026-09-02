@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Daftar — Accounting</title>
+<style>
+:root{
+  --ink:#17213A; --ink-2:#233054; --paper:#FBFAF6; --paper-2:#F1EFE8; --line:#DDD9CE;
+  --text:#1E2430; --muted:#6B7280; --green:#1F6F5A; --green-soft:#E3F1EC; --red:#A83A3A; --red-soft:#F7E6E6;
+  --amber:#B7791F; --amber-soft:#FBF0DA; --blue:#2F5FA8; --focus:#2F5FA8;
+  --radius:6px; --sans:"Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;font-family:var(--sans);font-size:14px;color:var(--text);background:var(--paper);font-variant-numeric:tabular-nums}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:var(--blue)}
+#app{display:grid;grid-template-columns:232px 1fr;height:100vh}
+/* Sidebar */
+.side{background:var(--ink);color:#DCE1EE;display:flex;flex-direction:column;overflow:auto}
+.brand{padding:18px 18px 12px;display:flex;align-items:baseline;gap:8px;border-bottom:1px solid rgba(255,255,255,.08)}
+.brand b{font-size:20px;letter-spacing:-.02em;color:#fff;font-weight:700}
+.brand span{font-size:11px;color:#9AA5C4}
+.company-box{padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.08)}
+.company-box select{width:100%;background:var(--ink-2);color:#fff;border:1px solid rgba(255,255,255,.15);border-radius:var(--radius);padding:7px 8px}
+.company-box small{display:block;color:#9AA5C4;margin-top:6px;font-size:11px}
+.nav{padding:8px 0 20px;flex:1}
+.nav h6{margin:14px 18px 4px;font-size:11px;font-weight:600;color:#8D97B5;letter-spacing:.02em}
+.nav a{display:flex;align-items:center;gap:9px;padding:6px 18px;color:#DCE1EE;text-decoration:none;font-size:13.5px;border-left:3px solid transparent}
+.nav a:hover{background:rgba(255,255,255,.06)}
+.nav a.on{background:rgba(255,255,255,.1);border-left-color:#7FD1B9;color:#fff}
+.nav a .k{width:16px;text-align:center;color:#8D97B5;font-size:12px}
+.side .user{padding:12px 18px;border-top:1px solid rgba(255,255,255,.08);font-size:12px;color:#9AA5C4}
+.side .user b{color:#fff;display:block;font-size:13px}
+/* Main */
+.main{display:flex;flex-direction:column;min-width:0;overflow:hidden}
+.topbar{display:flex;align-items:center;gap:12px;padding:10px 24px;border-bottom:1px solid var(--line);background:#fff}
+.topbar h1{font-size:18px;font-weight:600;margin:0;letter-spacing:-.01em}
+.topbar .sp{flex:1}
+.topbar .period{font-size:12px;color:var(--muted)}
+.content{padding:20px 24px 60px;overflow:auto;flex:1}
+/* Controls */
+.btn{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:7px 12px;cursor:pointer;font-size:13px;line-height:1.2}
+.btn:hover{background:var(--paper-2)}
+.btn.primary{background:var(--green);border-color:var(--green);color:#fff}
+.btn.primary:hover{background:#185a49}
+.btn.danger{color:var(--red);border-color:#e3c2c2}
+.btn.sm{padding:4px 8px;font-size:12px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,a:focus-visible{outline:2px solid var(--focus);outline-offset:1px}
+input[type=text],input[type=number],input[type=date],input[type=email],input[type=password],select,textarea{border:1px solid var(--line);border-radius:var(--radius);padding:7px 9px;background:#fff;width:100%}
+input[type=number]{text-align:right}
+textarea{min-height:60px;resize:vertical}
+label.f{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
+.field{margin-bottom:12px}
+.row{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap}
+.row>*{flex:1;min-width:120px}
+.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.toolbar .sp{flex:1}
+.toolbar input,.toolbar select{width:auto}
+/* Cards & tables */
+.card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:16px}
+.card h3{margin:0 0 10px;font-size:14px;font-weight:600}
+.grid{display:grid;gap:16px}
+.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}
+.kpi{padding:14px 16px}
+.kpi .l{font-size:12px;color:var(--muted)}
+.kpi .v{font-size:22px;font-weight:600;margin-top:4px;letter-spacing:-.01em}
+.kpi .s{font-size:12px;color:var(--muted);margin-top:2px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;font-weight:600;color:var(--muted);font-size:12px;padding:8px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:7px 8px;border-bottom:1px solid #EDEAE1;vertical-align:top}
+tr:hover td{background:#FAF8F2}
+.num,th.num{text-align:right;white-space:nowrap}
+td.dr{color:var(--text)} td.cr{color:var(--text)}
+.total td{font-weight:600;border-top:2px solid var(--ink);border-bottom:none;background:transparent}
+.sub td{font-weight:600;background:#F6F4EE}
+.indent1{padding-left:24px}.indent2{padding-left:40px}
+.neg{color:var(--red)}
+.tag{display:inline-block;padding:2px 7px;border-radius:10px;font-size:11px;font-weight:600}
+.tag.draft{background:#EEE;color:#555}.tag.posted{background:var(--green-soft);color:var(--green)}.tag.paid{background:#E2ECF9;color:var(--blue)}
+.tag.partial{background:var(--amber-soft);color:var(--amber)}.tag.overdue{background:var(--red-soft);color:var(--red)}.tag.void{background:#EEE;color:#888;text-decoration:line-through}
+.tag.reversed{background:#EEE;color:#888}
+.clickable{cursor:pointer}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px}
+.muted{color:var(--muted)}
+.empty{padding:28px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:var(--radius)}
+.notice{padding:10px 12px;border-radius:var(--radius);font-size:13px;margin-bottom:12px}
+.notice.warn{background:var(--amber-soft);color:#7a5210}.notice.err{background:var(--red-soft);color:var(--red)}.notice.ok{background:var(--green-soft);color:var(--green)}
+/* Journal lines - the ledger sheet */
+.ledger{border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;background:repeating-linear-gradient(#fff 0 35px,#F7F5EE 35px 36px)}
+.ledger table{background:transparent}
+.ledger th{background:var(--paper-2)}
+.ledger td{border-bottom:none;padding:3px 6px}
+.ledger tr:hover td{background:transparent}
+.ledger input,.ledger select{padding:5px 7px;border-color:transparent;background:transparent}
+.ledger input:hover,.ledger select:hover{border-color:var(--line);background:#fff}
+.ledger input:focus,.ledger select:focus{border-color:var(--blue);background:#fff}
+.ledger .col-dr{border-left:2px solid #C9D8EE}.ledger .col-cr{border-left:2px solid #E8C9C9}
+.balance-line{display:flex;justify-content:flex-end;gap:24px;padding:10px 12px;font-weight:600;background:var(--paper-2);border-top:1px solid var(--line)}
+.balance-line .ok{color:var(--green)}.balance-line .bad{color:var(--red)}
+/* Modal */
+.modal-bg{position:fixed;inset:0;background:rgba(23,33,58,.45);display:flex;align-items:flex-start;justify-content:center;padding:40px 16px;overflow:auto;z-index:50}
+.modal{background:#fff;border-radius:8px;width:100%;max-width:720px;padding:20px 22px;box-shadow:0 20px 50px rgba(0,0,0,.25)}
+.modal.wide{max-width:1040px}
+.modal h2{margin:0 0 14px;font-size:17px}
+.modal .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+/* Tabs */
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin-bottom:14px;overflow-x:auto}
+.tabs button{background:none;border:none;padding:8px 10px;white-space:nowrap;font-size:13px;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabs button.on{color:var(--text);border-bottom-color:var(--green);font-weight:600}
+/* Toast */
+#toast{position:fixed;bottom:20px;right:20px;background:var(--ink);color:#fff;padding:10px 14px;border-radius:var(--radius);opacity:0;transition:opacity .2s;pointer-events:none;z-index:99;font-size:13px}
+#toast.show{opacity:1}
+.report-head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:12px}
+.report-head h2{margin:0;font-size:16px}
+.report-head .meta{font-size:12px;color:var(--muted)}
+.bars{display:flex;align-items:flex-end;gap:10px;height:140px;padding-top:10px}
+.bars .m{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end}
+.bars .b{display:flex;gap:2px;align-items:flex-end;height:110px;width:100%;justify-content:center}
+.bars .b i{display:block;width:40%;background:var(--green);border-radius:2px 2px 0 0}
+.bars .b i.e{background:#C9A4A4}
+.bars .lbl{font-size:11px;color:var(--muted)}
+.login{height:100vh;display:grid;place-items:center;background:var(--ink)}
+.login .box{background:#fff;padding:28px;border-radius:8px;width:360px}
+.login h1{margin:0 0 4px;font-size:24px}
+.login p{margin:0 0 18px;color:var(--muted);font-size:13px}
+@media print{.side,.topbar,.toolbar,.btn,.no-print{display:none!important}#app{display:block}.content{padding:0;overflow:visible}body{background:#fff}}
+@media (max-width:900px){#app{grid-template-columns:1fr}.side{display:none}.g2,.g3,.g4{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<div id="toast"></div>
+<script>
+/* ===================== CORE: helpers, state, storage ===================== */
+const $ = (s, el=document) => el.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const r2 = n => Math.round((Number(n)||0) * 100) / 100;
+const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
+const today = () => new Date().toISOString().slice(0, 10);
+const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x.toISOString().slice(0, 10); };
+const monthKey = d => d.slice(0, 7);
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function fmt(n, blankZero=false) {
+  n = r2(n); if (blankZero && n === 0) return '';
+  const s = Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return n < 0 ? `(${s})` : s;
+}
+function fmtDate(d) { if (!d) return ''; const [y, m, dd] = d.split('-'); return `${dd} ${MONTHS[+m - 1]} ${y}`; }
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 2200); }
+function download(name, text, type='text/plain') { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name; a.click(); }
+function toCSV(rows) { return rows.map(r => r.map(c => `"${String(c ?? '').replace(/"/g, '""')}"`).join(',')).join('\n'); }
+
+const ACCOUNT_TYPES = ['Asset', 'Liability', 'Equity', 'Income', 'Expense'];
+const SUBTYPES = {
+  Asset: ['Cash & Bank', 'Accounts Receivable', 'Inventory', 'Other Current Asset', 'Fixed Asset', 'Accumulated Depreciation', 'Other Asset'],
+  Liability: ['Accounts Payable', 'Tax Payable', 'Other Current Liability', 'Long-term Liability'],
+  Equity: ['Capital', 'Retained Earnings', 'Drawings', 'Other Equity'],
+  Income: ['Sales Revenue', 'Other Income'],
+  Expense: ['Cost of Sales', 'Operating Expense', 'Depreciation', 'Finance Cost', 'Tax Expense', 'Other Expense'],
+};
+const DEBIT_NORMAL = { Asset: true, Expense: true, Liability: false, Equity: false, Income: false };
+const ROLES = { admin: 'Administrator', accountant: 'Accountant', viewer: 'Viewer' };
+const CAN = { post: ['admin','accountant'], edit: ['admin','accountant'], settings: ['admin'], lock: ['admin'] };
+
+/* Generic chart of accounts template — works for any trading / service company */
+const COA_TEMPLATE = [
+  // code, name, type, subtype, control (system role)
+  ['1000','Cash on Hand','Asset','Cash & Bank','cash'],
+  ['1010','Main Bank Account','Asset','Cash & Bank','bank'],
+  ['1020','Petty Cash','Asset','Cash & Bank',''],
+  ['1100','Accounts Receivable','Asset','Accounts Receivable','ar'],
+  ['1150','Advances to Suppliers','Asset','Other Current Asset',''],
+  ['1200','Inventory','Asset','Inventory','inventory'],
+  ['1300','Prepaid Expenses','Asset','Other Current Asset',''],
+  ['1350','Input Tax Receivable','Asset','Other Current Asset','taxin'],
+  ['1500','Property, Plant & Equipment','Asset','Fixed Asset','fa'],
+  ['1510','Vehicles','Asset','Fixed Asset',''],
+  ['1520','Computers & Office Equipment','Asset','Fixed Asset',''],
+  ['1590','Accumulated Depreciation','Asset','Accumulated Depreciation','accdep'],
+  ['2000','Accounts Payable','Liability','Accounts Payable','ap'],
+  ['2100','Output Tax Payable','Liability','Tax Payable','taxout'],
+  ['2130','Advances from Customers','Liability','Other Current Liability',''],
+  ['2200','Accrued Expenses','Liability','Other Current Liability',''],
+  ['2210','Salaries Payable','Liability','Other Current Liability',''],
+  ['2500','Bank Loan','Liability','Long-term Liability',''],
+  ['3000','Share Capital','Equity','Capital',''],
+  ['3100','Retained Earnings','Equity','Retained Earnings','re'],
+  ['3200','Owner Drawings','Equity','Drawings',''],
+  ['4000','Sales Revenue','Income','Sales Revenue','sales'],
+  ['4100','Service Revenue','Income','Sales Revenue',''],
+  ['4900','Other Income','Income','Other Income',''],
+  ['4910','Discount Received','Income','Other Income',''],
+  ['5000','Cost of Goods Sold','Expense','Cost of Sales','cogs'],
+  ['5100','Purchases','Expense','Cost of Sales','purchases'],
+  ['6000','Salaries & Wages','Expense','Operating Expense',''],
+  ['6100','Rent','Expense','Operating Expense',''],
+  ['6200','Utilities','Expense','Operating Expense',''],
+  ['6300','Marketing & Advertising','Expense','Operating Expense',''],
+  ['6400','Office Supplies','Expense','Operating Expense',''],
+  ['6500','Travel & Transport','Expense','Operating Expense',''],
+  ['6600','Professional Fees','Expense','Operating Expense',''],
+  ['6700','Insurance','Expense','Operating Expense',''],
+  ['6800','Repairs & Maintenance','Expense','Operating Expense',''],
+  ['6900','Bank Charges','Expense','Finance Cost','bankfee'],
+  ['6950','Interest Expense','Expense','Finance Cost',''],
+  ['7000','Depreciation Expense','Expense','Depreciation','depexp'],
+  ['7100','Discount Allowed','Expense','Other Expense',''],
+  ['7200','Bad Debts','Expense','Other Expense',''],
+  ['7900','Foreign Exchange Gain / Loss','Expense','Other Expense',''],
+];
+
+function newCompany(name, currency='USD', fyStartMonth=1, opts={}) {
+  const c = {
+    id: uid(), name, currency, fyStartMonth, lockDate: '', taxLabel: opts.taxLabel || 'VAT',
+    address: opts.address || '', taxId: opts.taxId || '', numbering: { INV: 1, BILL: 1, RCT: 1, PAY: 1, JE: 1, CN: 1, DN: 1 },
+    accounts: COA_TEMPLATE.map(([code, name, type, subtype, ctl]) => ({ id: uid(), code, name, type, subtype, ctl, active: true })),
+    taxRates: [{ id: uid(), name: 'Standard', rate: opts.taxRate ?? 5 }, { id: uid(), name: 'Zero-rated', rate: 0 }, { id: uid(), name: 'Exempt', rate: 0, exempt: true }],
+    parties: [], items: [], journals: [], docs: [], payments: [], assets: [], bankLines: [], audit: [],
+  };
+  return c;
+}
+
+let S = { companies: [], activeId: null, users: [], currentUser: null, view: 'dashboard', param: null };
+const KEY = 'daftar.v1';
+function save() { try { localStorage.setItem(KEY, JSON.stringify({ companies: S.companies, activeId: S.activeId, users: S.users })); } catch (e) { console.warn(e); } }
+function load() {
+  try { const d = JSON.parse(localStorage.getItem(KEY)); if (d && d.companies?.length) { S.companies = d.companies; S.activeId = d.activeId; S.users = d.users || []; return true; } } catch (e) {}
+  return false;
+}
+const C = () => S.companies.find(c => c.id === S.activeId);
+const acc = id => C().accounts.find(a => a.id === id);
+const accByCode = code => C().accounts.find(a => a.code === code);
+const ctl = role => C().accounts.find(a => a.ctl === role);
+const party = id => C().parties.find(p => p.id === id);
+const can = perm => S.currentUser && CAN[perm].includes(S.currentUser.role);
+function audit(action, detail) { C().audit.unshift({ at: new Date().toISOString(), by: S.currentUser?.name || 'system', action, detail }); if (C().audit.length > 500) C().audit.length = 500; }
+function nextNo(prefix) { const n = C().numbering[prefix]++; return `${prefix}-${String(n).padStart(5, '0')}`; }
+function fyStart(date) { const c = C(); const y = +date.slice(0, 4), m = +date.slice(5, 7); const fy = m >= c.fyStartMonth ? y : y - 1; return `${fy}-${String(c.fyStartMonth).padStart(2, '0')}-01`; }
+function fyEnd(date) { const s = fyStart(date); const y = +s.slice(0, 4) + 1; const d = new Date(`${y}-${s.slice(5, 7)}-01`); d.setDate(0); return d.toISOString().slice(0, 10); }
+
+/* ===================== ACCOUNTING ENGINE ===================== */
+function validateJournal(j) {
+  const errs = [];
+  if (!j.date) errs.push('Date is required.');
+  if (C().lockDate && j.date <= C().lockDate) errs.push(`Period is locked up to ${fmtDate(C().lockDate)}.`);
+  const lines = j.lines.filter(l => l.accountId && (r2(l.debit) || r2(l.credit)));
+  if (lines.length < 2) errs.push('A journal needs at least two lines with amounts.');
+  lines.forEach((l, i) => {
+    if (r2(l.debit) && r2(l.credit)) errs.push(`Line ${i + 1}: enter either a debit or a credit, not both.`);
+    if (r2(l.debit) < 0 || r2(l.credit) < 0) errs.push(`Line ${i + 1}: amounts cannot be negative.`);
+    const a = acc(l.accountId); if (a && !a.active) errs.push(`Line ${i + 1}: ${a.name} is inactive.`);
+    if (a && ['ar', 'ap'].includes(a.ctl) && !l.partyId) errs.push(`Line ${i + 1}: ${a.name} requires a customer/supplier.`);
+  });
+  const dr = r2(lines.reduce((s, l) => s + r2(l.debit), 0)), cr = r2(lines.reduce((s, l) => s + r2(l.credit), 0));
+  if (r2(dr - cr) !== 0) errs.push(`Journal is out of balance by ${fmt(Math.abs(dr - cr))}.`);
+  return { errs, lines, dr, cr };
+}
+function postJournal(j) {
+  const v = validateJournal(j); if (v.errs.length) throw new Error(v.errs.join(' '));
+  const entry = { id: j.id || uid(), no: j.no || nextNo('JE'), date: j.date, memo: j.memo || '', source: j.source || 'manual', sourceId: j.sourceId || null,
+    lines: v.lines.map(l => ({ accountId: l.accountId, partyId: l.partyId || null, memo: l.memo || '', debit: r2(l.debit), credit: r2(l.credit) })),
+    status: 'posted', createdAt: new Date().toISOString(), by: S.currentUser?.name };
+  C().journals.push(entry); audit('Post journal', `${entry.no} ${entry.memo} (${fmt(v.dr)})`); return entry;
+}
+function reverseJournal(id, date) {
+  const j = C().journals.find(x => x.id === id); if (!j || j.status !== 'posted') throw new Error('Only posted journals can be reversed.');
+  if (j.reversedBy) throw new Error('Already reversed.');
+  const rev = postJournal({ date: date || today(), memo: `Reversal of ${j.no}: ${j.memo}`, source: 'reversal', sourceId: j.id,
+    lines: j.lines.map(l => ({ ...l, debit: l.credit, credit: l.debit })) });
+  j.reversedBy = rev.id; j.status = 'reversed'; return rev;
+}
+// signed balance: positive = normal-side balance
+function balances(from, to, opts={}) {
+  const map = {};
+  for (const j of C().journals) {
+    if (j.status === 'void') continue; if (opts.excludeClose && j.source === 'close') continue;
+    if (from && j.date < from) continue; if (to && j.date > to) continue;
+    for (const l of j.lines) {
+      if (opts.partyId && l.partyId !== opts.partyId) continue;
+      const b = map[l.accountId] ||= { dr: 0, cr: 0 }; b.dr += l.debit; b.cr += l.credit;
+    }
+  }
+  return map;
+}
+function net(b, a) { if (!b) return 0; return r2(DEBIT_NORMAL[a.type] ? b.dr - b.cr : b.cr - b.dr); }
+function ledgerLines(accountId, from, to, partyId) {
+  const out = [];
+  for (const j of C().journals) if (j.status !== 'void') for (const l of j.lines) if (l.accountId === accountId && (!partyId || l.partyId === partyId)) out.push({ ...l, jid: j.id, no: j.no, date: j.date, jmemo: j.memo, source: j.source, sourceId: j.sourceId });
+  out.sort((a, b) => a.date.localeCompare(b.date) || a.no.localeCompare(b.no));
+  const a = acc(accountId); let run = 0; const res = []; let opening = 0;
+  for (const l of out) {
+    const d = DEBIT_NORMAL[a.type] ? l.debit - l.credit : l.credit - l.debit;
+    if (from && l.date < from) { opening += d; continue; } if (to && l.date > to) continue;
+    run += d; res.push({ ...l, run: r2(run + opening) });
+  }
+  return { opening: r2(opening), lines: res, closing: r2(opening + run) };
+}
+function plTotals(from, to) {
+  const b = balances(from, to, { excludeClose: true }); let income = 0, expense = 0, cogs = 0;
+  for (const a of C().accounts) { const n = net(b[a.id], a); if (a.type === 'Income') income += n; else if (a.type === 'Expense') { expense += n; if (a.subtype === 'Cost of Sales') cogs += n; } }
+  return { income: r2(income), expense: r2(expense), cogs: r2(cogs), profit: r2(income - expense) };
+}
+// Retained earnings incl. unclosed profit of prior years, at a date
+function retainedEarningsAt(date) {
+  const start = fyStart(date); const b = balances(null, addDays(start, -1)); let p = 0;
+  for (const a of C().accounts) if (a.type === 'Income' || a.type === 'Expense') p += a.type === 'Income' ? net(b[a.id], a) : -net(b[a.id], a);
+  return r2(p);
+}
+function docOutstanding(d) { return r2(d.total - (d.paid || 0)); }
+function docStatus(d) {
+  if (d.status === 'void' || d.status === 'draft') return d.status;
+  const out = docOutstanding(d); if (out <= 0) return 'paid';
+  if (d.paid > 0) return 'partial'; if (!isCreditDoc(d) && d.dueDate && d.dueDate < today()) return 'overdue'; return 'posted';
+}
+function calcDoc(d) {
+  let sub = 0, tax = 0;
+  d.lines.forEach(l => { const amt = r2((+l.qty || 0) * (+l.price || 0) * (1 - (+l.disc || 0) / 100)); l.amount = amt; const tr = C().taxRates.find(t => t.id === l.taxId); l.tax = tr && !tr.exempt ? r2(amt * tr.rate / 100) : 0; sub += amt; tax += l.tax; });
+  d.subtotal = r2(sub); d.taxTotal = r2(tax); d.total = r2(sub + tax); return d;
+}
+function postDoc(d) {
+  calcDoc(d); if (d.status !== 'draft') throw new Error('Only drafts can be posted.');
+  if (!d.partyId) throw new Error('Select a customer or supplier.'); if (!d.lines.some(l => l.amount)) throw new Error('Add at least one line.');
+  const isSale = d.type === 'INV' || d.type === 'CN'; const isCredit = d.type === 'CN' || d.type === 'DN';
+  const ctrl = isSale ? ctl('ar') : ctl('ap'); const taxAcc = isSale ? ctl('taxout') : ctl('taxin');
+  const lines = [];
+  const sign = isCredit ? -1 : 1;
+  const push = (accountId, dr, cr, memo, partyId) => { dr = r2(dr * sign); cr = r2(cr * sign); if (dr < 0) { cr = -dr; dr = 0; } else if (cr < 0) { dr = -cr; cr = 0; } lines.push({ accountId, debit: dr, credit: cr, memo, partyId }); };
+  if (isSale) push(ctrl.id, d.total, 0, `${d.no} ${party(d.partyId)?.name}`, d.partyId); else push(ctrl.id, 0, d.total, `${d.no} ${party(d.partyId)?.name}`, d.partyId);
+  const byAcc = {}; d.lines.forEach(l => { if (!l.amount) return; byAcc[l.accountId] = (byAcc[l.accountId] || 0) + l.amount; });
+  for (const [aid, amt] of Object.entries(byAcc)) isSale ? push(aid, 0, amt, d.no) : push(aid, amt, 0, d.no);
+  if (d.taxTotal) isSale ? push(taxAcc.id, 0, d.taxTotal, `${C().taxLabel} on ${d.no}`) : push(taxAcc.id, d.taxTotal, 0, `${C().taxLabel} on ${d.no}`);
+  const j = postJournal({ date: d.date, memo: `${docTypeName(d.type)} ${d.no} — ${party(d.partyId)?.name}`, source: d.type, sourceId: d.id, lines });
+  d.status = 'posted'; d.journalId = j.id; d.paid = 0; audit(`Post ${docTypeName(d.type)}`, `${d.no} ${fmt(d.total)}`);
+  if (isCredit) { d.total = d.total; } // credit notes carry positive totals; settled via allocation
+}
+const isCreditDoc = d => d.type === 'CN' || d.type === 'DN';
+function docTypeName(t) { return { INV: 'Sales invoice', CN: 'Credit note', BILL: 'Purchase bill', DN: 'Debit note' }[t] || t; }
+function voidDoc(d) {
+  if (d.status !== 'posted') throw new Error('Only posted documents can be voided.'); if (d.paid) throw new Error('Unallocate payments first.');
+  reverseJournal(d.journalId); d.status = 'void'; audit('Void document', d.no);
+}
+function postPayment(p) {
+  // p: {kind:'RCT'|'PAY', date, partyId, bankAccountId, amount, ref, allocations:[{docId, amount}], discount}
+  const isRct = p.kind === 'RCT'; const ctrl = isRct ? ctl('ar') : ctl('ap');
+  const amt = r2(p.amount); if (amt <= 0) throw new Error('Amount must be positive.');
+  const allocTotal = r2(p.allocations.reduce((s, a) => s + r2(a.amount), 0));
+  if (r2(allocTotal - amt - r2(p.discount || 0)) > 0.005) throw new Error('Allocations exceed the payment amount.');
+  for (const al of p.allocations) { const d = C().docs.find(x => x.id === al.docId); const cn = isCreditDoc(d); if (cn ? r2(-al.amount) > docOutstanding(d) + 0.005 || al.amount > 0 : r2(al.amount) > docOutstanding(d) + 0.005 || al.amount < 0) throw new Error(`Allocation to ${d.no} exceeds its balance.`); }
+  const lines = [];
+  const bank = acc(p.bankAccountId); if (!bank) throw new Error('Select a bank or cash account.');
+  if (isRct) { lines.push({ accountId: bank.id, debit: amt, credit: 0, memo: p.ref }); if (r2(p.discount)) lines.push({ accountId: accByCode('7100').id, debit: r2(p.discount), credit: 0, memo: 'Discount allowed' }); lines.push({ accountId: ctrl.id, debit: 0, credit: r2(amt + r2(p.discount || 0)), partyId: p.partyId, memo: p.ref }); }
+  else { lines.push({ accountId: ctrl.id, debit: r2(amt + r2(p.discount || 0)), credit: 0, partyId: p.partyId, memo: p.ref }); if (r2(p.discount)) lines.push({ accountId: accByCode('4910').id, debit: 0, credit: r2(p.discount), memo: 'Discount received' }); lines.push({ accountId: bank.id, debit: 0, credit: amt, memo: p.ref }); }
+  const no = nextNo(p.kind);
+  const j = postJournal({ date: p.date, memo: `${isRct ? 'Receipt' : 'Payment'} ${no} — ${party(p.partyId)?.name}${p.ref ? ' (' + p.ref + ')' : ''}`, source: p.kind, sourceId: null, lines });
+  const rec = { id: uid(), no, kind: p.kind, date: p.date, partyId: p.partyId, bankAccountId: p.bankAccountId, amount: amt, discount: r2(p.discount || 0), ref: p.ref || '', allocations: p.allocations.map(a => ({ docId: a.docId, amount: r2(a.amount) })), journalId: j.id, status: 'posted' };
+  j.sourceId = rec.id; C().payments.push(rec);
+  for (const al of rec.allocations) { const d = C().docs.find(x => x.id === al.docId); d.paid = r2((d.paid || 0) + Math.abs(al.amount)); }
+  audit(isRct ? 'Receipt' : 'Payment', `${no} ${fmt(amt)}`); return rec;
+}
+function voidPayment(p) {
+  if (p.status !== 'posted') throw new Error('Already voided.');
+  reverseJournal(p.journalId); for (const al of p.allocations) { const d = C().docs.find(x => x.id === al.docId); d.paid = r2(d.paid - Math.abs(al.amount)); }
+  p.status = 'void'; audit('Void payment', p.no);
+}
+function runDepreciation(period) { // period 'YYYY-MM'
+  const lines = []; const end = new Date(+period.slice(0, 4), +period.slice(5, 7), 0).toISOString().slice(0, 10); let count = 0;
+  for (const a of C().assets) {
+    if (a.status !== 'active' || a.purchaseDate > end) continue; if (a.runs?.includes(period)) continue;
+    const dep = depreciationFor(a); if (dep <= 0) continue;
+    lines.push({ accountId: a.expenseAccountId || ctl('depexp').id, debit: dep, credit: 0, memo: a.name }); lines.push({ accountId: a.accDepAccountId || ctl('accdep').id, debit: 0, credit: dep, memo: a.name });
+    a.accumulated = r2((a.accumulated || 0) + dep); (a.runs ||= []).push(period); count++;
+  }
+  if (!count) throw new Error('Nothing to depreciate for this period.');
+  const j = postJournal({ date: end, memo: `Depreciation for ${MONTHS[+period.slice(5, 7) - 1]} ${period.slice(0, 4)}`, source: 'depreciation', lines });
+  return { j, count };
+}
+function depreciationFor(a) {
+  const nbv = r2(a.cost - (a.accumulated || 0)); const floor = r2(a.salvage || 0); if (nbv <= floor) return 0;
+  let dep = a.method === 'declining' ? r2(nbv * (a.rate / 100) / 12) : r2((a.cost - floor) / a.lifeMonths);
+  return Math.min(dep, r2(nbv - floor));
+}
+function yearEndClose(fyEndDate) {
+  const b = balances(null, fyEndDate); const re = ctl('re'); const lines = []; let profit = 0;
+  for (const a of C().accounts) { if (a.type !== 'Income' && a.type !== 'Expense') continue; const n = net(b[a.id], a); if (!n) continue;
+    if (a.type === 'Income') { lines.push({ accountId: a.id, debit: n, credit: 0, memo: 'Year-end close' }); profit += n; } else { lines.push({ accountId: a.id, debit: 0, credit: n, memo: 'Year-end close' }); profit -= n; } }
+  if (!lines.length) throw new Error('Nothing to close.');
+  profit = r2(profit); lines.push({ accountId: re.id, debit: profit < 0 ? -profit : 0, credit: profit > 0 ? profit : 0, memo: 'Net result for the year' });
+  const j = postJournal({ date: fyEndDate, memo: `Year-end closing ${fyEndDate.slice(0, 4)}`, source: 'close', lines }); C().lockDate = fyEndDate; audit('Year-end close', `${fyEndDate} profit ${fmt(profit)}`); return j;
+}
+/* ===================== DEMO SEED ===================== */
+function seedDemo() {
+  const c = newCompany('Northwind Trading LLC', 'USD', 1, { taxRate: 5, address: '12 Harbour Road, Portside', taxId: 'TX-100-2233' });
+  S.companies.push(c); S.activeId = c.id;
+  S.users = [{ id: uid(), name: 'Admin User', email: 'admin@company.com', role: 'admin' }, { id: uid(), name: 'Sara Accountant', email: 'sara@company.com', role: 'accountant' }, { id: uid(), name: 'Read Only', email: 'viewer@company.com', role: 'viewer' }];
+  S.currentUser = S.users[0];
+  const P = (name, kind, extra={}) => { const p = { id: uid(), name, kind, email: '', phone: '', address: '', terms: 30, taxId: '', active: true, ...extra }; c.parties.push(p); return p; };
+  const cust = [P('Blue Ocean Retail', 'customer', { terms: 30 }), P('Harbour Cafe', 'customer', { terms: 15 }), P('Summit Constructions', 'customer', { terms: 45 }), P('Green Leaf Pharmacy', 'customer')];
+  const sup = [P('Global Imports Co', 'supplier', { terms: 30 }), P('City Power & Water', 'supplier', { terms: 15 }), P('Metro Office Supplies', 'supplier'), P('Prime Property Holdings', 'supplier')];
+  c.items = [{ id: uid(), code: 'WID-100', name: 'Widget Standard', price: 45, cost: 28, accountId: accByCode('4000').id }, { id: uid(), code: 'WID-200', name: 'Widget Pro', price: 120, cost: 74, accountId: accByCode('4000').id }, { id: uid(), code: 'SVC-INST', name: 'Installation service (hour)', price: 90, cost: 0, accountId: accByCode('4100').id }];
+  const std = c.taxRates[0].id;
+  const y = new Date().getFullYear(); const D = (m, d) => `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+  // opening balances
+  postJournal({ date: D(1, 1), memo: 'Opening balances', source: 'opening', lines: [
+    { accountId: accByCode('1010').id, debit: 85000, credit: 0 }, { accountId: accByCode('1000').id, debit: 2500, credit: 0 }, { accountId: accByCode('1200').id, debit: 34000, credit: 0 },
+    { accountId: accByCode('1510').id, debit: 42000, credit: 0 }, { accountId: accByCode('1520').id, debit: 9600, credit: 0 }, { accountId: accByCode('1590').id, debit: 0, credit: 11200 },
+    { accountId: accByCode('2500').id, debit: 0, credit: 30000 }, { accountId: accByCode('3000').id, debit: 0, credit: 100000 }, { accountId: accByCode('3100').id, debit: 0, credit: 31900 } ] });
+  c.assets = [{ id: uid(), name: 'Delivery van', code: 'FA-001', category: 'Vehicles', assetAccountId: accByCode('1510').id, accDepAccountId: accByCode('1590').id, expenseAccountId: accByCode('7000').id, purchaseDate: `${y - 2}-03-15`, cost: 42000, salvage: 2000, method: 'straight', lifeMonths: 60, rate: 20, accumulated: 10000, status: 'active', runs: [] },
+    { id: uid(), name: 'Office computers (6)', code: 'FA-002', category: 'Computers', assetAccountId: accByCode('1520').id, accDepAccountId: accByCode('1590').id, expenseAccountId: accByCode('7000').id, purchaseDate: `${y - 1}-06-01`, cost: 9600, salvage: 0, method: 'straight', lifeMonths: 36, rate: 33.3, accumulated: 1200, status: 'active', runs: [] }];
+  const mkDoc = (type, partyId, date, terms, lines, no) => { const d = { id: uid(), type, no: no || nextNo(type), partyId, date, dueDate: addDays(date, terms), ref: '', notes: '', status: 'draft', lines: lines.map(l => ({ ...l, id: uid() })), paid: 0 }; c.docs.push(d); postDoc(d); return d; };
+  const inv = [];
+  const rev = accByCode('4000').id, svc = accByCode('4100').id, pur = accByCode('5100').id;
+  let m = 1; const cur = new Date().getMonth() + 1; const dd = new Date().getDate();
+  for (m = 1; m <= cur; m++) {
+    const last = m === cur ? Math.max(1, Math.min(dd, 28)) : 28;
+    inv.push(mkDoc('INV', cust[0].id, D(m, 3), 30, [{ desc: 'Widget Standard', qty: 380 + m * 12, price: 45, disc: 0, taxId: std, accountId: rev }, { desc: 'Widget Pro', qty: 55 + m, price: 120, disc: 0, taxId: std, accountId: rev }]));
+    inv.push(mkDoc('INV', cust[1].id, D(m, 10), 15, [{ desc: 'Widget Standard', qty: 85, price: 45, disc: 5, taxId: std, accountId: rev }]));
+    if (m % 2 === 0) inv.push(mkDoc('INV', cust[2].id, D(m, 14), 45, [{ desc: 'Installation service', qty: 40, price: 90, disc: 0, taxId: std, accountId: svc }, { desc: 'Widget Pro', qty: 35, price: 118, disc: 0, taxId: std, accountId: rev }]));
+    if (m % 3 === 1) inv.push(mkDoc('INV', cust[3].id, D(m, 20), 30, [{ desc: 'Widget Standard', qty: 140, price: 44, disc: 0, taxId: std, accountId: rev }]));
+    mkDoc('BILL', sup[0].id, D(m, 2), 30, [{ desc: 'Widget Standard (cartons)', qty: 150, price: 28, disc: 0, taxId: std, accountId: pur }, { desc: 'Widget Pro', qty: 40, price: 74, disc: 0, taxId: std, accountId: pur }]);
+    mkDoc('BILL', sup[1].id, D(m, 5), 15, [{ desc: 'Electricity & water', qty: 1, price: 1150 + m * 20, disc: 0, taxId: std, accountId: accByCode('6200').id }]);
+    mkDoc('BILL', sup[3].id, D(m, 1), 7, [{ desc: 'Warehouse rent', qty: 1, price: 4500, disc: 0, taxId: c.taxRates[2].id, accountId: accByCode('6100').id }]);
+    if (m % 2 === 1) mkDoc('BILL', sup[2].id, D(m, 12), 30, [{ desc: 'Stationery & toner', qty: 1, price: 380, disc: 0, taxId: std, accountId: accByCode('6400').id }]);
+    // salaries
+    postJournal({ date: D(m, last), memo: `Salaries ${MONTHS[m - 1]}`, lines: [{ accountId: accByCode('6000').id, debit: 14200, credit: 0 }, { accountId: accByCode('1010').id, debit: 0, credit: 14200 }] });
+    postJournal({ date: D(m, last), memo: `Bank charges ${MONTHS[m - 1]}`, lines: [{ accountId: accByCode('6900').id, debit: 45, credit: 0 }, { accountId: accByCode('1010').id, debit: 0, credit: 45 }] });
+    if (m % 3 === 0) postJournal({ date: D(m, last), memo: `Stock count adjustment Q${m / 3}`, lines: [{ accountId: accByCode('5000').id, debit: 850, credit: 0 }, { accountId: accByCode('1200').id, debit: 0, credit: 850 }] });
+  }
+  // receipts & payments: pay most docs older than 20 days
+  for (const d of c.docs.filter(x => x.status === 'posted')) {
+    const age = (new Date() - new Date(d.date)) / 864e5; if (age < 20) continue;
+    if (d.type === 'INV' && (age > 40 || Math.random() > 0.3)) postPayment({ kind: 'RCT', date: addDays(d.date, Math.min(Math.round(age) - 2, 22)), partyId: d.partyId, bankAccountId: accByCode('1010').id, amount: d.total, ref: `TRF ${d.no}`, allocations: [{ docId: d.id, amount: d.total }] });
+    if (d.type === 'BILL' && (age > 35 || Math.random() > 0.35)) postPayment({ kind: 'PAY', date: addDays(d.date, Math.min(Math.round(age) - 1, 18)), partyId: d.partyId, bankAccountId: accByCode('1010').id, amount: d.total, ref: `CHQ ${d.no}`, allocations: [{ docId: d.id, amount: d.total }] });
+  }
+  // a credit note
+  const cn = { id: uid(), type: 'CN', no: nextNo('CN'), partyId: cust[0].id, date: D(Math.max(1, cur - 1), 18), dueDate: D(Math.max(1, cur - 1), 18), ref: `Return against ${inv[0].no}`, status: 'draft', paid: 0, lines: [{ id: uid(), desc: 'Widget Standard returned', qty: 10, price: 45, disc: 0, taxId: std, accountId: rev }] }; c.docs.push(cn); postDoc(cn);
+  // bank statement lines for reconciliation demo
+  c.bankLines = c.journals.filter(j => j.source === 'RCT' || j.source === 'PAY').slice(0, 12).map(j => { const l = j.lines.find(x => x.accountId === accByCode('1010').id); return { id: uid(), date: j.date, desc: j.memo.slice(0, 40), amount: r2(l.debit - l.credit), cleared: false }; });
+  c.audit = []; audit('Company created', 'Demo data loaded');
+  save();
+}
+
+/* ===================== APP SHELL ===================== */
+const NAV = [
+  ['Overview', [['dashboard', 'Dashboard', '◉']]],
+  ['Sales', [['customers', 'Customers', '⌂'], ['invoices', 'Invoices & credit notes', '▤'], ['receipts', 'Receipts', '↓']]],
+  ['Purchases', [['suppliers', 'Suppliers', '⌂'], ['bills', 'Bills & debit notes', '▤'], ['payments', 'Payments', '↑']]],
+  ['Banking', [['banking', 'Bank & cash', '▣'], ['reconcile', 'Reconciliation', '✓']]],
+  ['Accounting', [['journals', 'Journal entries', '≡'], ['ledger', 'General ledger', '☰'], ['coa', 'Chart of accounts', '⋮'], ['assets', 'Fixed assets', '⚙'], ['tax', C()?.taxLabel || 'Tax', '%'], ['periods', 'Periods & year end', '▦']]],
+  ['Reports', [['reports', 'Financial reports', '▥']]],
+  ['Setup', [['items', 'Products & services', '◫'], ['settings', 'Company & users', '⚙'], ['audit', 'Audit log', '◷']]],
+];
+function go(view, param=null) { S.view = view; S.param = param; render(); $('.content')?.scrollTo(0, 0); }
+function render() {
+  if (!S.currentUser) return renderLogin();
+  const c = C(); const v = VIEWS[S.view] || VIEWS.dashboard;
+  $('#root').innerHTML = `
+  <div id="app">
+    <aside class="side">
+      <div class="brand"><b>Daftar</b><span>accounting</span></div>
+      <div class="company-box">
+        <select onchange="switchCompany(this.value)" aria-label="Company">${S.companies.map(x => `<option value="${x.id}" ${x.id === c.id ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}<option value="__new">+ New company…</option></select>
+        <small>${esc(c.currency)} · FY starts ${MONTHS[c.fyStartMonth - 1]}${c.lockDate ? ' · locked to ' + fmtDate(c.lockDate) : ''}</small>
+      </div>
+      <nav class="nav">${NAV.map(([g, items]) => `<h6>${g}</h6>` + items.map(([k, l, ic]) => `<a href="#" class="${S.view === k ? 'on' : ''}" onclick="go('${k}');return false"><span class="k">${ic}</span>${esc(l)}</a>`).join('')).join('')}</nav>
+      <div class="user"><b>${esc(S.currentUser.name)}</b>${ROLES[S.currentUser.role]} · <a href="#" style="color:#9AA5C4" onclick="S.currentUser=null;render();return false">sign out</a></div>
+    </aside>
+    <div class="main">
+      <div class="topbar"><h1>${esc(v.title(c))}</h1><span class="sp"></span><span class="period">${fmtDate(today())}</span></div>
+      <div class="content">${v.body(c)}</div>
+    </div>
+  </div>`;
+  v.after?.();
+}
+function switchCompany(id) {
+  if (id === '__new') return openModal(companyForm());
+  S.activeId = id; save(); go('dashboard');
+}
+function renderLogin() {
+  $('#root').innerHTML = `<div class="login"><div class="box"><h1>Daftar</h1><p>Sign in to your company books</p>
+    <div class="field"><label class="f">User</label><select id="lu">${S.users.map(u => `<option value="${u.id}">${esc(u.name)} — ${ROLES[u.role]}</option>`).join('')}</select></div>
+    <div class="field"><label class="f">Password</label><input type="password" id="lp" placeholder="any password in this demo"></div>
+    <button class="btn primary" style="width:100%" onclick="S.currentUser=S.users.find(u=>u.id===$('#lu').value);render()">Sign in</button>
+    <p style="margin-top:14px">Demo build: authentication is simulated; roles control what each user can do.</p></div></div>`;
+}
+/* Modal helpers */
+function openModal(html, wide=false) { closeModal(); const bg = document.createElement('div'); bg.className = 'modal-bg'; bg.id = 'modal'; bg.innerHTML = `<div class="modal ${wide ? 'wide' : ''}" role="dialog">${html}</div>`; bg.addEventListener('click', e => { if (e.target === bg) closeModal(); }); document.body.appendChild(bg); bg.querySelector('input,select,textarea,button')?.focus(); }
+function closeModal() { $('#modal')?.remove(); }
+function fval(id) { return $('#' + id)?.value ?? ''; }
+function commit(msg) { save(); if (msg) toast(msg); render(); }
+function guard(perm) { if (!can(perm)) { toast('Your role cannot do this.'); return false; } return true; }
+function tryDo(fn, okMsg) { try { fn(); commit(okMsg); closeModal(); } catch (e) { toast(e.message); } }
+const sel = (id, opts, val, extra='') => `<select id="${id}" ${extra}>${opts.map(o => `<option value="${o[0]}" ${o[0] === val ? 'selected' : ''}>${esc(o[1])}</option>`).join('')}</select>`;
+const accOpts = (filter) => C().accounts.filter(a => a.active && (!filter || filter(a))).map(a => [a.id, `${a.code} ${a.name}`]);
+const partyOpts = kind => C().parties.filter(p => p.active && p.kind === kind).map(p => [p.id, p.name]);
+const bankOpts = () => accOpts(a => a.subtype === 'Cash & Bank');
+const VIEWS = {};
+/* ===================== VIEWS: dashboard, COA, journals, ledger ===================== */
+VIEWS.dashboard = { title: c => c.name, body: c => {
+  const t = today(), fs = fyStart(t), b = balances(null, t); const pl = plTotals(fs, t);
+  const cash = c.accounts.filter(a => a.subtype === 'Cash & Bank').reduce((s, a) => s + net(b[a.id], a), 0);
+  const ar = net(b[ctl('ar').id], ctl('ar')), ap = net(b[ctl('ap').id], ctl('ap'));
+  const overdue = c.docs.filter(d => docStatus(d) === 'overdue');
+  const months = []; for (let i = 5; i >= 0; i--) { const d = new Date(); d.setMonth(d.getMonth() - i); const k = d.toISOString().slice(0, 7); const e = new Date(d.getFullYear(), d.getMonth() + 1, 0).toISOString().slice(0, 10); months.push({ k, lbl: MONTHS[d.getMonth()], ...plTotals(k + '-01', e) }); }
+  const mx = Math.max(1, ...months.map(m => Math.max(m.income, m.expense)));
+  const recent = [...c.journals].sort((a, b) => b.date.localeCompare(a.date) || b.no.localeCompare(a.no)).slice(0, 8);
+  return `<div class="grid g4">
+    <div class="card kpi"><div class="l">Cash & bank</div><div class="v">${fmt(cash)}</div><div class="s">${c.currency}</div></div>
+    <div class="card kpi"><div class="l">Receivable</div><div class="v">${fmt(ar)}</div><div class="s">${overdue.filter(d => d.type === 'INV').length} overdue invoice(s)</div></div>
+    <div class="card kpi"><div class="l">Payable</div><div class="v">${fmt(ap)}</div><div class="s">${overdue.filter(d => d.type === 'BILL').length} overdue bill(s)</div></div>
+    <div class="card kpi"><div class="l">Net profit, FY to date</div><div class="v ${pl.profit < 0 ? 'neg' : ''}">${fmt(pl.profit)}</div><div class="s">Revenue ${fmt(pl.income)} · Expenses ${fmt(pl.expense)}</div></div>
+  </div>
+  <div class="grid g2">
+    <div class="card"><h3>Revenue vs expenses, last 6 months</h3><div class="bars">${months.map(m => `<div class="m"><div class="b"><i style="height:${m.income / mx * 100}%" title="Revenue ${fmt(m.income)}"></i><i class="e" style="height:${m.expense / mx * 100}%" title="Expenses ${fmt(m.expense)}"></i></div><span class="lbl">${m.lbl}</span></div>`).join('')}</div>
+      <div class="muted" style="font-size:12px;margin-top:8px"><span style="color:var(--green)">■</span> Revenue &nbsp; <span style="color:#C9A4A4">■</span> Expenses</div></div>
+    <div class="card"><h3>Needs attention</h3>${overdue.length ? `<table><tr><th>Document</th><th>Party</th><th>Due</th><th class="num">Balance</th></tr>${overdue.slice(0, 8).map(d => `<tr class="clickable" onclick="openDoc('${d.id}')"><td>${d.no}</td><td>${esc(party(d.partyId)?.name)}</td><td class="neg">${fmtDate(d.dueDate)}</td><td class="num">${fmt(docOutstanding(d))}</td></tr>`).join('')}</table>` : '<div class="empty">Nothing overdue. All invoices and bills are within terms.</div>'}</div>
+  </div>
+  <div class="card"><h3>Recent journal activity</h3><table><tr><th>No</th><th>Date</th><th>Description</th><th>Source</th><th class="num">Amount</th></tr>${recent.map(j => `<tr class="clickable" onclick="showJournal('${j.id}')"><td class="mono">${j.no}</td><td>${fmtDate(j.date)}</td><td>${esc(j.memo)}</td><td class="muted">${j.source}</td><td class="num">${fmt(j.lines.reduce((s, l) => s + l.debit, 0))}</td></tr>`).join('')}</table></div>`;
+} };
+
+VIEWS.coa = { title: () => 'Chart of accounts', body: c => {
+  const b = balances(null, today()); const q = (S.param?.q || '').toLowerCase();
+  const rows = ACCOUNT_TYPES.map(t => { const list = c.accounts.filter(a => a.type === t && (!q || (a.code + a.name).toLowerCase().includes(q))).sort((x, y) => x.code.localeCompare(y.code)); if (!list.length) return '';
+    return `<tr class="sub"><td colspan="5">${t}</td></tr>` + list.map(a => `<tr class="${a.active ? '' : 'muted'}"><td class="mono">${a.code}</td><td class="clickable" onclick="go('ledger',{accountId:'${a.id}'})">${esc(a.name)}${a.ctl ? ` <span class="tag draft" title="System control account">${a.ctl}</span>` : ''}${a.active ? '' : ' <span class="tag void">inactive</span>'}</td><td class="muted">${a.subtype}</td><td class="num">${fmt(net(b[a.id], a))}</td><td class="num"><button class="btn sm" onclick="editAccount('${a.id}')">Edit</button></td></tr>`).join(''); }).join('');
+  return `<div class="toolbar"><input type="text" placeholder="Search code or name" value="${esc(S.param?.q || '')}" oninput="S.param={q:this.value};render();$('.toolbar input').focus();$('.toolbar input').setSelectionRange(99,99)"><span class="sp"></span><button class="btn" onclick="exportCOA()">Export CSV</button><button class="btn primary" onclick="editAccount()">New account</button></div>
+  <div class="card"><table><tr><th>Code</th><th>Account</th><th>Category</th><th class="num">Balance today</th><th></th></tr>${rows}</table></div>`;
+} };
+function exportCOA() { download('chart-of-accounts.csv', toCSV([['Code', 'Name', 'Type', 'Subtype', 'Active'], ...C().accounts.map(a => [a.code, a.name, a.type, a.subtype, a.active ? 'yes' : 'no'])]), 'text/csv'); }
+function editAccount(id) {
+  if (!guard('edit')) return; const a = id ? acc(id) : { code: '', name: '', type: 'Asset', subtype: 'Other Current Asset', active: true };
+  const subOpts = t => SUBTYPES[t].map(s => [s, s]);
+  openModal(`<h2>${id ? 'Edit account' : 'New account'}</h2><div class="row"><div class="field"><label class="f">Code</label><input type="text" id="a_code" value="${esc(a.code)}"></div><div class="field" style="flex:3"><label class="f">Name</label><input type="text" id="a_name" value="${esc(a.name)}"></div></div>
+  <div class="row"><div class="field"><label class="f">Type</label>${sel('a_type', ACCOUNT_TYPES.map(t => [t, t]), a.type, `onchange="$('#a_sub').innerHTML=SUBTYPES[this.value].map(s=>'<option>'+s+'</option>').join('')"`)}</div><div class="field"><label class="f">Category</label>${sel('a_sub', subOpts(a.type), a.subtype)}</div><div class="field"><label class="f">Status</label>${sel('a_active', [['1', 'Active'], ['0', 'Inactive']], a.active ? '1' : '0')}</div></div>
+  ${a.ctl ? '<div class="notice warn">System control account: type cannot be changed.</div>' : ''}
+  <div class="actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn primary" onclick="saveAccount('${id || ''}')">Save account</button></div>`);
+}
+function saveAccount(id) {
+  tryDo(() => { const code = fval('a_code').trim(), name = fval('a_name').trim(); if (!code || !name) throw new Error('Code and name are required.');
+    if (C().accounts.some(x => x.code === code && x.id !== id)) throw new Error(`Code ${code} is already used.`);
+    if (id) { const a = acc(id); Object.assign(a, { code, name, subtype: fval('a_sub'), active: fval('a_active') === '1' }); if (!a.ctl) a.type = fval('a_type'); audit('Edit account', `${code} ${name}`); }
+    else { C().accounts.push({ id: uid(), code, name, type: fval('a_type'), subtype: fval('a_sub'), ctl: '', active: fval('a_active') === '1' }); audit('New account', `${code} ${name}`); } }, 'Account saved');
+}
+
+VIEWS.journals = { title: () => 'Journal entries', body: c => {
+  const p = S.param || {}; const from = p.from || fyStart(today()), to = p.to || today(), src = p.src || '';
+  const list = c.journals.filter(j => j.date >= from && j.date <= to && (!src || j.source === src)).sort((a, b) => b.date.localeCompare(a.date) || b.no.localeCompare(a.no));
+  const sources = [...new Set(c.journals.map(j => j.source))];
+  return `<div class="toolbar"><input type="date" value="${from}" onchange="S.param={...S.param,from:this.value};render()"><input type="date" value="${to}" onchange="S.param={...S.param,to:this.value};render()">${sel('jsrc', [['', 'All sources'], ...sources.map(s => [s, s])], src, `onchange="S.param={...S.param,src:this.value};render()"`)}<span class="sp"></span><button class="btn" onclick="exportJournals()">Export CSV</button><button class="btn primary" onclick="journalEditor()">New journal entry</button></div>
+  <div class="card"><table><tr><th>No</th><th>Date</th><th>Description</th><th>Source</th><th class="num">Debit</th><th class="num">Credit</th><th>Status</th></tr>${list.map(j => { const dr = j.lines.reduce((s, l) => s + l.debit, 0), cr = j.lines.reduce((s, l) => s + l.credit, 0); return `<tr class="clickable" onclick="showJournal('${j.id}')"><td class="mono">${j.no}</td><td>${fmtDate(j.date)}</td><td>${esc(j.memo)}</td><td class="muted">${j.source}</td><td class="num">${fmt(dr)}</td><td class="num">${fmt(cr)}</td><td><span class="tag ${j.status}">${j.status}</span></td></tr>`; }).join('') || '<tr><td colspan="7" class="empty">No journals in this range.</td></tr>'}</table></div>`;
+} };
+function exportJournals() { const rows = [['Journal', 'Date', 'Description', 'Source', 'Account code', 'Account', 'Party', 'Line memo', 'Debit', 'Credit']]; for (const j of C().journals) for (const l of j.lines) rows.push([j.no, j.date, j.memo, j.source, acc(l.accountId)?.code, acc(l.accountId)?.name, party(l.partyId)?.name || '', l.memo, l.debit, l.credit]); download('journal-register.csv', toCSV(rows), 'text/csv'); }
+function showJournal(id) {
+  const j = C().journals.find(x => x.id === id); const rev = j.reversedBy && C().journals.find(x => x.id === j.reversedBy);
+  openModal(`<h2>${j.no} <span class="tag ${j.status}">${j.status}</span></h2><div class="muted" style="margin-bottom:10px">${fmtDate(j.date)} · ${esc(j.memo)} · source: ${j.source} · posted by ${esc(j.by || '')}${rev ? ` · reversed by ${rev.no}` : ''}</div>
+  <table><tr><th>Account</th><th>Party</th><th>Memo</th><th class="num">Debit</th><th class="num">Credit</th></tr>${j.lines.map(l => `<tr><td>${acc(l.accountId)?.code} ${esc(acc(l.accountId)?.name)}</td><td>${esc(party(l.partyId)?.name || '')}</td><td class="muted">${esc(l.memo)}</td><td class="num">${fmt(l.debit, true)}</td><td class="num">${fmt(l.credit, true)}</td></tr>`).join('')}<tr class="total"><td colspan="3">Total</td><td class="num">${fmt(j.lines.reduce((s, l) => s + l.debit, 0))}</td><td class="num">${fmt(j.lines.reduce((s, l) => s + l.credit, 0))}</td></tr></table>
+  <div class="actions">${j.status === 'posted' && j.source === 'manual' && can('post') ? `<button class="btn danger" onclick="if(confirm('Post a reversing entry dated today?'))tryDo(()=>reverseJournal('${j.id}'),'Journal reversed')">Reverse</button>` : ''}${j.source === 'manual' ? `<button class="btn" onclick="journalEditor(null,'${j.id}')">Copy as new</button>` : ''}<button class="btn" onclick="closeModal()">Close</button></div>`, true);
+}
+let JE = null; // journal being edited
+function journalEditor(preset, copyId) {
+  if (!guard('post')) return;
+  const src = copyId && C().journals.find(x => x.id === copyId);
+  JE = preset || { date: today(), memo: src?.memo || '', lines: src ? src.lines.map(l => ({ ...l })) : [{}, {}] };
+  while (JE.lines.length < 2) JE.lines.push({});
+  renderJE();
+}
+function renderJE() {
+  const v = validateJournal(JE);
+  const line = (l, i) => `<tr><td style="width:34%">${sel(`je_a_${i}`, [['', '— account —'], ...accOpts()], l.accountId || '', `onchange="JE.lines[${i}].accountId=this.value;renderJE()"`)}</td>
+    <td style="width:18%">${sel(`je_p_${i}`, [['', '—'], ...C().parties.filter(p => p.active).map(p => [p.id, p.name])], l.partyId || '', `onchange="JE.lines[${i}].partyId=this.value"`)}</td>
+    <td><input type="text" value="${esc(l.memo || '')}" placeholder="memo" oninput="JE.lines[${i}].memo=this.value"></td>
+    <td class="col-dr" style="width:13%"><input type="number" step="0.01" value="${l.debit || ''}" onchange="JE.lines[${i}].debit=+this.value;JE.lines[${i}].credit=this.value?0:JE.lines[${i}].credit;renderJE()"></td>
+    <td class="col-cr" style="width:13%"><input type="number" step="0.01" value="${l.credit || ''}" onchange="JE.lines[${i}].credit=+this.value;JE.lines[${i}].debit=this.value?0:JE.lines[${i}].debit;renderJE()"></td>
+    <td style="width:30px"><button class="btn sm" title="Remove line" onclick="JE.lines.splice(${i},1);renderJE()">×</button></td></tr>`;
+  const html = `<h2>New journal entry</h2>
+  <div class="row"><div class="field" style="flex:0 0 160px"><label class="f">Date</label><input type="date" id="je_date" value="${JE.date}" onchange="JE.date=this.value;renderJE()"></div><div class="field"><label class="f">Description</label><input type="text" id="je_memo" value="${esc(JE.memo)}" oninput="JE.memo=this.value"></div></div>
+  <div class="ledger"><table><tr><th>Account</th><th>Customer / supplier</th><th>Memo</th><th class="num col-dr">Debit</th><th class="num col-cr">Credit</th><th></th></tr>${JE.lines.map(line).join('')}</table>
+  <div class="balance-line"><span>Debits ${fmt(v.dr)}</span><span>Credits ${fmt(v.cr)}</span><span class="${r2(v.dr - v.cr) === 0 && v.dr ? 'ok' : 'bad'}">${r2(v.dr - v.cr) === 0 ? (v.dr ? 'Balanced' : 'Enter amounts') : 'Difference ' + fmt(Math.abs(v.dr - v.cr))}</span></div></div>
+  <div style="margin-top:8px"><button class="btn sm" onclick="JE.lines.push({});renderJE()">+ Add line</button> <button class="btn sm" onclick="autoBalanceJE()">Balance last line</button></div>
+  ${v.errs.length ? `<div class="notice err" style="margin-top:12px">${v.errs.map(esc).join('<br>')}</div>` : ''}
+  <div class="actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn primary" ${v.errs.length ? 'disabled' : ''} onclick="tryDo(()=>postJournal(JE),'Journal posted')">Post journal</button></div>`;
+  const m = $('#modal .modal'); if (m) m.innerHTML = html; else openModal(html, true);
+}
+function autoBalanceJE() { const v = validateJournal(JE); const diff = r2(v.dr - v.cr); const last = JE.lines[JE.lines.length - 1]; if (diff > 0) { last.credit = r2((last.credit || 0) + diff); last.debit = 0; } else { last.debit = r2((last.debit || 0) - diff); last.credit = 0; } renderJE(); }
+
+VIEWS.ledger = { title: () => 'General ledger', body: c => {
+  const p = S.param || {}; const aid = p.accountId || ctl('bank').id; const from = p.from || fyStart(today()), to = p.to || today();
+  const a = acc(aid); const L = ledgerLines(aid, from, to, p.partyId);
+  return `<div class="toolbar">${sel('gl_acc', accOpts(), aid, `onchange="S.param={...S.param,accountId:this.value};render()"`)}<input type="date" value="${from}" onchange="S.param={...S.param,from:this.value};render()"><input type="date" value="${to}" onchange="S.param={...S.param,to:this.value};render()">${['ar', 'ap'].includes(a.ctl) ? sel('gl_p', [['', 'All parties'], ...partyOpts(a.ctl === 'ar' ? 'customer' : 'supplier')], p.partyId || '', `onchange="S.param={...S.param,partyId:this.value};render()"`) : ''}<span class="sp"></span><button class="btn" onclick="window.print()">Print</button></div>
+  <div class="card"><div class="report-head"><h2>${a.code} ${esc(a.name)}</h2><span class="meta">${fmtDate(from)} to ${fmtDate(to)} · ${a.type}, ${DEBIT_NORMAL[a.type] ? 'debit' : 'credit'} balance</span></div>
+  <table><tr><th>Date</th><th>Journal</th><th>Description</th><th>Party</th><th class="num">Debit</th><th class="num">Credit</th><th class="num">Balance</th></tr>
+  <tr class="sub"><td colspan="6">Opening balance</td><td class="num">${fmt(L.opening)}</td></tr>
+  ${L.lines.map(l => `<tr class="clickable" onclick="showJournal('${l.jid}')"><td>${fmtDate(l.date)}</td><td class="mono">${l.no}</td><td>${esc(l.jmemo)}${l.memo ? `<div class="muted">${esc(l.memo)}</div>` : ''}</td><td>${esc(party(l.partyId)?.name || '')}</td><td class="num">${fmt(l.debit, true)}</td><td class="num">${fmt(l.credit, true)}</td><td class="num">${fmt(l.run)}</td></tr>`).join('')}
+  <tr class="total"><td colspan="4">Closing balance</td><td class="num">${fmt(L.lines.reduce((s, l) => s + l.debit, 0))}</td><td class="num">${fmt(L.lines.reduce((s, l) => s + l.credit, 0))}</td><td class="num">${fmt(L.closing)}</td></tr></table></div>`;
+} };
+/* ===================== VIEWS: parties, items, documents, payments ===================== */
+function partiesView(kind) { return { title: () => kind === 'customer' ? 'Customers' : 'Suppliers', body: c => {
+  const b = balances(null, today()); const ctrlAcc = ctl(kind === 'customer' ? 'ar' : 'ap'); const q = (S.param?.q || '').toLowerCase();
+  const list = c.parties.filter(p => p.kind === kind && (!q || p.name.toLowerCase().includes(q)));
+  const bal = p => { const m = balances(null, today(), { partyId: p.id }); return net(m[ctrlAcc.id], ctrlAcc); };
+  return `<div class="toolbar"><input type="text" placeholder="Search" value="${esc(S.param?.q || '')}" oninput="S.param={q:this.value};render();$('.toolbar input').focus();$('.toolbar input').setSelectionRange(99,99)"><span class="sp"></span><button class="btn primary" onclick="editParty('${kind}')">New ${kind}</button></div>
+  <div class="card"><table><tr><th>Name</th><th>Contact</th><th>Terms</th><th>Tax ID</th><th class="num">Balance</th><th></th></tr>${list.map(p => `<tr><td class="clickable" onclick="go('ledger',{accountId:'${ctrlAcc.id}',partyId:'${p.id}'})"><b>${esc(p.name)}</b>${p.active ? '' : ' <span class="tag void">inactive</span>'}</td><td class="muted">${esc(p.email)}${p.phone ? ' · ' + esc(p.phone) : ''}</td><td>${p.terms} days</td><td class="muted">${esc(p.taxId)}</td><td class="num">${fmt(bal(p))}</td><td class="num"><button class="btn sm" onclick="partyStatement('${p.id}')">Statement</button> <button class="btn sm" onclick="editParty('${kind}','${p.id}')">Edit</button></td></tr>`).join('') || `<tr><td colspan="6" class="empty">No ${kind}s yet. Add one to start invoicing.</td></tr>`}</table></div>`;
+} }; }
+VIEWS.customers = partiesView('customer'); VIEWS.suppliers = partiesView('supplier');
+function editParty(kind, id) {
+  if (!guard('edit')) return; const p = id ? party(id) : { name: '', email: '', phone: '', address: '', terms: 30, taxId: '', active: true };
+  openModal(`<h2>${id ? 'Edit' : 'New'} ${kind}</h2><div class="field"><label class="f">Name</label><input type="text" id="p_name" value="${esc(p.name)}"></div>
+  <div class="row"><div class="field"><label class="f">Email</label><input type="email" id="p_email" value="${esc(p.email)}"></div><div class="field"><label class="f">Phone</label><input type="text" id="p_phone" value="${esc(p.phone)}"></div></div>
+  <div class="row"><div class="field"><label class="f">Payment terms (days)</label><input type="number" id="p_terms" value="${p.terms}"></div><div class="field"><label class="f">Tax ID</label><input type="text" id="p_tax" value="${esc(p.taxId)}"></div><div class="field"><label class="f">Status</label>${sel('p_active', [['1', 'Active'], ['0', 'Inactive']], p.active ? '1' : '0')}</div></div>
+  <div class="field"><label class="f">Address</label><textarea id="p_addr">${esc(p.address)}</textarea></div>
+  <div class="actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn primary" onclick="tryDo(()=>{const name=fval('p_name').trim();if(!name)throw new Error('Name is required.');const d={name,email:fval('p_email'),phone:fval('p_phone'),terms:+fval('p_terms')||0,taxId:fval('p_tax'),address:fval('p_addr'),active:fval('p_active')==='1'};if('${id || ''}'){Object.assign(party('${id}'),d)}else{C().parties.push({id:uid(),kind:'${kind}',...d})};audit('Save ${kind}',name)},'Saved')">Save</button></div>`);
+}
+function partyStatement(id) {
+  const p = party(id); const ctrlAcc = ctl(p.kind === 'customer' ? 'ar' : 'ap'); const from = fyStart(today()); const L = ledgerLines(ctrlAcc.id, from, today(), id);
+  const flip = p.kind === 'supplier';
+  openModal(`<h2>Statement of account</h2><div class="muted" style="margin-bottom:10px"><b>${esc(p.name)}</b> · ${fmtDate(from)} to ${fmtDate(today())} · ${esc(C().name)}</div>
+  <table><tr><th>Date</th><th>Reference</th><th>Description</th><th class="num">${flip ? 'Credit' : 'Debit'}</th><th class="num">${flip ? 'Debit' : 'Credit'}</th><th class="num">Balance</th></tr><tr class="sub"><td colspan="5">Opening balance</td><td class="num">${fmt(L.opening)}</td></tr>
+  ${L.lines.map(l => `<tr><td>${fmtDate(l.date)}</td><td class="mono">${l.no}</td><td>${esc(l.jmemo)}</td><td class="num">${fmt(flip ? l.credit : l.debit, true)}</td><td class="num">${fmt(flip ? l.debit : l.credit, true)}</td><td class="num">${fmt(l.run)}</td></tr>`).join('')}<tr class="total"><td colspan="5">Balance ${p.kind === 'customer' ? 'due from' : 'due to'} ${esc(p.name)}</td><td class="num">${fmt(L.closing)}</td></tr></table>
+  <div class="actions"><button class="btn" onclick="window.print()">Print</button><button class="btn" onclick="closeModal()">Close</button></div>`, true);
+}
+
+VIEWS.items = { title: () => 'Products & services', body: c => `<div class="toolbar"><span class="sp"></span><button class="btn primary" onclick="editItem()">New item</button></div>
+  <div class="card"><table><tr><th>Code</th><th>Name</th><th>Income account</th><th class="num">Sell price</th><th class="num">Cost</th><th></th></tr>${c.items.map(i => `<tr><td class="mono">${esc(i.code)}</td><td>${esc(i.name)}</td><td class="muted">${acc(i.accountId)?.name || ''}</td><td class="num">${fmt(i.price)}</td><td class="num">${fmt(i.cost)}</td><td class="num"><button class="btn sm" onclick="editItem('${i.id}')">Edit</button></td></tr>`).join('') || '<tr><td colspan="6" class="empty">No items yet. Items pre-fill invoice lines with a price and income account.</td></tr>'}</table></div>` };
+function editItem(id) {
+  if (!guard('edit')) return; const i = id ? C().items.find(x => x.id === id) : { code: '', name: '', price: 0, cost: 0, accountId: ctl('sales').id };
+  openModal(`<h2>${id ? 'Edit' : 'New'} item</h2><div class="row"><div class="field"><label class="f">Code</label><input type="text" id="i_code" value="${esc(i.code)}"></div><div class="field" style="flex:3"><label class="f">Name</label><input type="text" id="i_name" value="${esc(i.name)}"></div></div>
+  <div class="row"><div class="field"><label class="f">Sell price</label><input type="number" step="0.01" id="i_price" value="${i.price}"></div><div class="field"><label class="f">Cost</label><input type="number" step="0.01" id="i_cost" value="${i.cost}"></div><div class="field" style="flex:2"><label class="f">Income account</label>${sel('i_acc', accOpts(a => a.type === 'Income'), i.accountId)}</div></div>
+  <div class="actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn primary" onclick="tryDo(()=>{const d={code:fval('i_code'),name:fval('i_name'),price:+fval('i_price'),cost:+fval('i_cost'),accountId:fval('i_acc')};if(!d.name)throw new Error('Name is required.');if('${id || ''}')Object.assign(C().items.find(x=>x.id==='${id}'),d);else C().items.push({id:uid(),...d})},'Item saved')">Save</button></div>`);
+}
+
+/* Documents: invoices (INV/CN) and bills (BILL/DN) */
+function docsView(types, title, partyKind) { return { title: () => title, body: c => {
+  const p = S.param || {}; const st = p.status || ''; const q = (p.q || '').toLowerCase();
+  const list = c.docs.filter(d => types.includes(d.type) && (!st || docStatus(d) === st) && (!q || (d.no + party(d.partyId)?.name + d.ref).toLowerCase().includes(q))).sort((a, b) => b.date.localeCompare(a.date) || b.no.localeCompare(a.no));
+  const tot = list.reduce((s, d) => s + (d.status === 'void' ? 0 : (isCreditDoc(d) ? -d.total : d.total)), 0), out = list.reduce((s, d) => s + (d.status === 'void' || d.status === 'draft' ? 0 : (isCreditDoc(d) ? -docOutstanding(d) : docOutstanding(d))), 0);
+  return `<div class="toolbar"><input type="text" placeholder="Search number, party, reference" value="${esc(p.q || '')}" oninput="S.param={...S.param,q:this.value};render();$('.toolbar input').focus();$('.toolbar input').setSelectionRange(99,99)">${sel('dst', [['', 'All statuses'], ['draft', 'Draft'], ['posted', 'Unpaid'], ['partial', 'Partly paid'], ['overdue', 'Overdue'], ['paid', 'Paid'], ['void', 'Void']], st, `onchange="S.param={...S.param,status:this.value};render()"`)}<span class="sp"></span><button class="btn" onclick="docEditor('${types[1]}')">New ${docTypeName(types[1]).toLowerCase()}</button><button class="btn primary" onclick="docEditor('${types[0]}')">New ${docTypeName(types[0]).toLowerCase()}</button></div>
+  <div class="card"><table><tr><th>Number</th><th>Date</th><th>${partyKind === 'customer' ? 'Customer' : 'Supplier'}</th><th>Due</th><th class="num">Total</th><th class="num">Balance</th><th>Status</th></tr>${list.map(d => { const s = docStatus(d); return `<tr class="clickable" onclick="openDoc('${d.id}')"><td class="mono">${d.no}${isCreditDoc(d) ? ` <span class="tag draft">${d.type}</span>` : ''}</td><td>${fmtDate(d.date)}</td><td>${esc(party(d.partyId)?.name)}</td><td class="${s === 'overdue' ? 'neg' : ''}">${isCreditDoc(d) ? '' : fmtDate(d.dueDate)}</td><td class="num">${fmt(isCreditDoc(d) ? -d.total : d.total)}</td><td class="num">${s === 'draft' || s === 'void' ? '' : fmt(isCreditDoc(d) ? -docOutstanding(d) : docOutstanding(d))}</td><td><span class="tag ${s}">${s === 'posted' ? 'unpaid' : s}</span></td></tr>`; }).join('') || '<tr><td colspan="7" class="empty">Nothing here yet.</td></tr>'}<tr class="total"><td colspan="4">${list.length} document(s)</td><td class="num">${fmt(tot)}</td><td class="num">${fmt(out)}</td><td></td></tr></table></div>`;
+} }; }
+VIEWS.invoices = docsView(['INV', 'CN'], 'Invoices & credit notes', 'customer'); VIEWS.bills = docsView(['BILL', 'DN'], 'Bills & debit notes', 'supplier');
+let DOC = null;
+function docEditor(type, id) {
+  if (!guard('edit')) return;
+  const isSale = type === 'INV' || type === 'CN';
+  DOC = id ? JSON.parse(JSON.stringify(C().docs.find(d => d.id === id))) : { id: uid(), type, no: '', partyId: '', date: today(), dueDate: addDays(today(), 30), ref: '', notes: '', status: 'draft', paid: 0, lines: [{ id: uid(), desc: '', qty: 1, price: 0, disc: 0, taxId: C().taxRates[0].id, accountId: isSale ? ctl('sales').id : ctl('purchases').id }] };
+  renderDocEditor();
+}
+function renderDocEditor() {
+  const d = calcDoc(DOC); const isSale = d.type === 'INV' || d.type === 'CN'; const kind = isSale ? 'customer' : 'supplier';
+  const lineAccs = accOpts(a => isSale ? a.type === 'Income' : a.type === 'Expense' || a.subtype === 'Inventory' || a.subtype === 'Fixed Asset' || a.subtype === 'Other Current Asset');
+  const rows = d.lines.map((l, i) => `<tr><td style="width:30%"><input type="text" list="items_dl" value="${esc(l.desc)}" placeholder="description" oninput="docLineDesc(${i},this.value)"></td><td style="width:20%">${sel('', lineAccs, l.accountId, `onchange="DOC.lines[${i}].accountId=this.value"`)}</td><td style="width:8%"><input type="number" step="0.01" value="${l.qty}" onchange="DOC.lines[${i}].qty=+this.value;renderDocEditor()"></td><td style="width:11%"><input type="number" step="0.01" value="${l.price}" onchange="DOC.lines[${i}].price=+this.value;renderDocEditor()"></td><td style="width:7%"><input type="number" step="0.1" value="${l.disc || 0}" onchange="DOC.lines[${i}].disc=+this.value;renderDocEditor()"></td><td style="width:12%">${sel('', C().taxRates.map(t => [t.id, `${t.name} ${t.rate}%`]), l.taxId, `onchange="DOC.lines[${i}].taxId=this.value;renderDocEditor()"`)}</td><td class="num" style="width:10%">${fmt(l.amount)}</td><td style="width:30px"><button class="btn sm" onclick="DOC.lines.splice(${i},1);renderDocEditor()">×</button></td></tr>`).join('');
+  const html = `<h2>${d.no ? d.no : 'New ' + docTypeName(d.type).toLowerCase()}</h2>
+  <datalist id="items_dl">${C().items.map(i => `<option value="${esc(i.name)}">`).join('')}</datalist>
+  <div class="row"><div class="field" style="flex:2"><label class="f">${kind[0].toUpperCase() + kind.slice(1)}</label>${sel('d_party', [['', '— select —'], ...partyOpts(kind)], d.partyId, `onchange="DOC.partyId=this.value;const p=party(this.value);if(p)DOC.dueDate=addDays(DOC.date,p.terms);renderDocEditor()"`)}</div><div class="field"><label class="f">Date</label><input type="date" value="${d.date}" onchange="DOC.date=this.value;const p=party(DOC.partyId);DOC.dueDate=addDays(this.value,p?p.terms:30);renderDocEditor()"></div>${isCreditDoc(d) ? '' : `<div class="field"><label class="f">Due date</label><input type="date" value="${d.dueDate}" onchange="DOC.dueDate=this.value"></div>`}<div class="field"><label class="f">Reference</label><input type="text" value="${esc(d.ref)}" oninput="DOC.ref=this.value"></div></div>
+  <div class="ledger"><table><tr><th>Description</th><th>Account</th><th class="num">Qty</th><th class="num">Unit price</th><th class="num">Disc %</th><th>${C().taxLabel}</th><th class="num">Amount</th><th></th></tr>${rows}</table>
+  <div class="balance-line"><span>Subtotal ${fmt(d.subtotal)}</span><span>${C().taxLabel} ${fmt(d.taxTotal)}</span><span>Total ${fmt(d.total)}</span></div></div>
+  <div style="margin-top:8px"><button class="btn sm" onclick="DOC.lines.push({id:uid(),desc:'',qty:1,price:0,disc:0,taxId:C().taxRates[0].id,accountId:DOC.lines[0]?.accountId||(${isSale}?ctl('sales').id:ctl('purchases').id)});renderDocEditor()">+ Add line</button></div>
+  <div class="field" style="margin-top:12px"><label class="f">Notes</label><textarea oninput="DOC.notes=this.value">${esc(d.notes)}</textarea></div>
+  <div class="actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn" onclick="saveDoc(false)">Save draft</button><button class="btn primary" onclick="saveDoc(true)">Save & post</button></div>`;
+  const m = $('#modal .modal'); if (m) m.innerHTML = html; else openModal(html, true);
+}
+function docLineDesc(i, v) { DOC.lines[i].desc = v; const it = C().items.find(x => x.name === v); if (it) { DOC.lines[i].price = it.price; if (DOC.type === 'INV' || DOC.type === 'CN') DOC.lines[i].accountId = it.accountId; renderDocEditor(); } }
+function saveDoc(post) {
+  tryDo(() => { calcDoc(DOC); if (!DOC.partyId) throw new Error('Select a party.'); if (!DOC.no) DOC.no = nextNo(DOC.type);
+    const ex = C().docs.findIndex(x => x.id === DOC.id); if (ex >= 0) C().docs[ex] = DOC; else C().docs.push(DOC);
+    if (post) { if (!can('post')) throw new Error('Your role cannot post.'); postDoc(DOC); } else audit('Save draft', DOC.no); }, post ? 'Posted' : 'Draft saved');
+}
+function openDoc(id) {
+  const d = C().docs.find(x => x.id === id); const s = docStatus(d); const p = party(d.partyId); const isSale = d.type === 'INV' || d.type === 'CN';
+  const allocs = C().payments.filter(x => x.status === 'posted' && x.allocations.some(a => a.docId === id));
+  openModal(`<div class="report-head"><div><h2 style="font-size:20px">${docTypeName(d.type)} ${d.no} <span class="tag ${s}">${s === 'posted' ? 'unpaid' : s}</span></h2><div class="muted">${esc(C().name)}${C().taxId ? ' · Tax ID ' + esc(C().taxId) : ''}</div></div><div class="meta" style="text-align:right">Date ${fmtDate(d.date)}${isCreditDoc(d) ? '' : '<br>Due ' + fmtDate(d.dueDate)}${d.ref ? '<br>Ref ' + esc(d.ref) : ''}</div></div>
+  <div style="margin:10px 0 14px"><b>${esc(p?.name)}</b><div class="muted">${esc(p?.address || '')}${p?.taxId ? ' · Tax ID ' + esc(p.taxId) : ''}</div></div>
+  <table><tr><th>Description</th><th class="num">Qty</th><th class="num">Unit price</th><th class="num">Disc</th><th class="num">${C().taxLabel}</th><th class="num">Amount</th></tr>${d.lines.map(l => `<tr><td>${esc(l.desc)}<div class="muted">${acc(l.accountId)?.name || ''}</div></td><td class="num">${l.qty}</td><td class="num">${fmt(l.price)}</td><td class="num">${l.disc ? l.disc + '%' : ''}</td><td class="num">${fmt(l.tax, true)}</td><td class="num">${fmt(l.amount)}</td></tr>`).join('')}
+  <tr class="sub"><td colspan="5" class="num">Subtotal</td><td class="num">${fmt(d.subtotal)}</td></tr><tr class="sub"><td colspan="5" class="num">${C().taxLabel}</td><td class="num">${fmt(d.taxTotal)}</td></tr><tr class="total"><td colspan="5" class="num">Total</td><td class="num">${fmt(d.total)}</td></tr>${d.status !== 'draft' ? `<tr><td colspan="5" class="num">Settled</td><td class="num">${fmt(d.paid)}</td></tr><tr class="sub"><td colspan="5" class="num">Balance due</td><td class="num">${fmt(docOutstanding(d))}</td></tr>` : ''}</table>
+  ${allocs.length ? `<h3 style="margin-top:14px">Settlements</h3><table>${allocs.map(x => `<tr><td>${x.no}</td><td>${fmtDate(x.date)}</td><td class="muted">${esc(x.ref)}</td><td class="num">${fmt(Math.abs(x.allocations.find(a => a.docId === id).amount))}</td></tr>`).join('')}</table>` : ''}
+  ${d.notes ? `<p class="muted">${esc(d.notes)}</p>` : ''}
+  <div class="actions no-print">${d.status === 'draft' ? `<button class="btn" onclick="docEditor('${d.type}','${d.id}')">Edit</button><button class="btn primary" onclick="tryDo(()=>{if(!can('post'))throw new Error('Your role cannot post.');postDoc(C().docs.find(x=>x.id==='${d.id}'))},'Posted')">Post</button>` : ''}
+  ${d.status === 'posted' && !isCreditDoc(d) && docOutstanding(d) > 0 && can('post') ? `<button class="btn primary" onclick="paymentEditor('${isSale ? 'RCT' : 'PAY'}','${d.partyId}','${d.id}')">${isSale ? 'Record receipt' : 'Record payment'}</button>` : ''}
+  ${d.status === 'posted' && can('post') ? `<button class="btn danger" onclick="if(confirm('Void ${d.no}? A reversing journal will be posted.'))tryDo(()=>voidDoc(C().docs.find(x=>x.id==='${d.id}')),'Voided')">Void</button>` : ''}
+  ${d.journalId ? `<button class="btn" onclick="showJournal('${d.journalId}')">Journal</button>` : ''}<button class="btn" onclick="docEditor('${d.type}','${d.id}');DOC.id=uid();DOC.no='';DOC.status='draft';DOC.paid=0;DOC.journalId=null;renderDocEditor()">Duplicate</button><button class="btn" onclick="window.print()">Print</button><button class="btn" onclick="closeModal()">Close</button></div>`, true);
+}
+
+/* Receipts and payments */
+function paymentsView(kind) { return { title: () => kind === 'RCT' ? 'Receipts' : 'Payments', body: c => {
+  const list = c.payments.filter(p => p.kind === kind).sort((a, b) => b.date.localeCompare(a.date));
+  return `<div class="toolbar"><span class="sp"></span><button class="btn primary" onclick="paymentEditor('${kind}')">New ${kind === 'RCT' ? 'receipt' : 'payment'}</button></div>
+  <div class="card"><table><tr><th>Number</th><th>Date</th><th>${kind === 'RCT' ? 'Customer' : 'Supplier'}</th><th>Account</th><th>Reference</th><th>Applied to</th><th class="num">Amount</th><th></th></tr>${list.map(p => `<tr class="${p.status === 'void' ? 'muted' : ''}"><td class="mono">${p.no}</td><td>${fmtDate(p.date)}</td><td>${esc(party(p.partyId)?.name)}</td><td class="muted">${esc(acc(p.bankAccountId)?.name)}</td><td class="muted">${esc(p.ref)}</td><td class="muted">${p.allocations.map(a => C().docs.find(d => d.id === a.docId)?.no).join(', ') || 'on account'}</td><td class="num">${fmt(p.amount)}</td><td class="num">${p.status === 'void' ? '<span class="tag void">void</span>' : `<button class="btn sm" onclick="showJournal('${p.journalId}')">Journal</button> ${can('post') ? `<button class="btn sm danger" onclick="if(confirm('Void ${p.no}?'))tryDo(()=>voidPayment(C().payments.find(x=>x.id==='${p.id}')),'Voided')">Void</button>` : ''}`}</td></tr>`).join('') || '<tr><td colspan="8" class="empty">No transactions yet.</td></tr>'}</table></div>`;
+} }; }
+VIEWS.receipts = paymentsView('RCT'); VIEWS.payments = paymentsView('PAY');
+let PM = null;
+function paymentEditor(kind, partyId, docId) {
+  if (!guard('post')) return; PM = { kind, date: today(), partyId: partyId || '', bankAccountId: ctl('bank').id, amount: 0, discount: 0, ref: '', alloc: {} };
+  if (docId) { const d = C().docs.find(x => x.id === docId); PM.alloc[docId] = docOutstanding(d); PM.amount = docOutstanding(d); }
+  renderPM();
+}
+function renderPM() {
+  const isRct = PM.kind === 'RCT'; const kind = isRct ? 'customer' : 'supplier'; const types = isRct ? ['INV', 'CN'] : ['BILL', 'DN'];
+  const open = C().docs.filter(d => d.partyId === PM.partyId && types.includes(d.type) && d.status === 'posted' && docOutstanding(d) > 0).sort((a, b) => a.date.localeCompare(b.date));
+  const allocTotal = r2(Object.values(PM.alloc).reduce((s, v) => s + (+v || 0), 0)); const diff = r2(PM.amount + r2(PM.discount) - allocTotal);
+  const html = `<h2>New ${isRct ? 'receipt' : 'payment'}</h2>
+  <div class="row"><div class="field" style="flex:2"><label class="f">${kind[0].toUpperCase() + kind.slice(1)}</label>${sel('pm_party', [['', '— select —'], ...partyOpts(kind)], PM.partyId, `onchange="PM.partyId=this.value;PM.alloc={};renderPM()"`)}</div><div class="field"><label class="f">Date</label><input type="date" value="${PM.date}" onchange="PM.date=this.value"></div><div class="field" style="flex:2"><label class="f">${isRct ? 'Deposit to' : 'Pay from'}</label>${sel('pm_bank', bankOpts(), PM.bankAccountId, `onchange="PM.bankAccountId=this.value"`)}</div></div>
+  <div class="row"><div class="field"><label class="f">Amount</label><input type="number" step="0.01" value="${PM.amount || ''}" onchange="PM.amount=+this.value;renderPM()"></div><div class="field"><label class="f">Settlement discount</label><input type="number" step="0.01" value="${PM.discount || ''}" onchange="PM.discount=+this.value;renderPM()"></div><div class="field" style="flex:2"><label class="f">Reference (cheque / transfer no.)</label><input type="text" value="${esc(PM.ref)}" oninput="PM.ref=this.value"></div></div>
+  <h3>Apply to open documents</h3>${open.length ? `<table><tr><th>Document</th><th>Date</th><th>Due</th><th class="num">Balance</th><th class="num" style="width:150px">Apply</th></tr>${open.map(d => { const cn = isCreditDoc(d); return `<tr><td class="mono">${d.no}${cn ? ' <span class="tag draft">' + d.type + '</span>' : ''}</td><td>${fmtDate(d.date)}</td><td>${cn ? '' : fmtDate(d.dueDate)}</td><td class="num">${fmt(cn ? -docOutstanding(d) : docOutstanding(d))}</td><td><input type="number" step="0.01" value="${PM.alloc[d.id] ?? ''}" onchange="PM.alloc['${d.id}']=+this.value;renderPM()"></td></tr>`; }).join('')}</table><div style="margin-top:6px"><button class="btn sm" onclick="autoAlloc()">Auto-apply oldest first</button></div>` : '<div class="empty">No open documents for this party. The amount will be posted on account.</div>'}
+  <div class="balance-line" style="margin-top:10px"><span>Applied ${fmt(allocTotal)}</span><span class="${diff === 0 ? 'ok' : diff > 0 ? '' : 'bad'}">${diff === 0 ? 'Fully applied' : diff > 0 ? 'On account ' + fmt(diff) : 'Over-applied by ' + fmt(-diff)}</span></div>
+  <div class="actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn primary" onclick="tryDo(()=>postPayment({...PM,allocations:Object.entries(PM.alloc).filter(([k,v])=>+v).map(([docId,amount])=>({docId,amount:+amount}))}),'Posted')">Post ${isRct ? 'receipt' : 'payment'}</button></div>`;
+  const m = $('#modal .modal'); if (m) m.innerHTML = html; else openModal(html, true);
+}
+function autoAlloc() { const isRct = PM.kind === 'RCT'; const types = isRct ? ['INV', 'CN'] : ['BILL', 'DN']; let left = r2(PM.amount + r2(PM.discount)); PM.alloc = {};
+  const open = C().docs.filter(d => d.partyId === PM.partyId && types.includes(d.type) && d.status === 'posted' && docOutstanding(d) > 0).sort((a, b) => a.date.localeCompare(b.date));
+  for (const d of open.filter(isCreditDoc)) { PM.alloc[d.id] = -docOutstanding(d); left = r2(left + docOutstanding(d)); }
+  for (const d of open.filter(d => !isCreditDoc(d))) { if (left <= 0) break; const a = Math.min(left, docOutstanding(d)); PM.alloc[d.id] = a; left = r2(left - a); } renderPM(); }
+/* ===================== VIEWS: banking, reconciliation, assets, tax, periods ===================== */
+VIEWS.banking = { title: () => 'Bank & cash', body: c => {
+  const b = balances(null, today()); const accs = c.accounts.filter(a => a.subtype === 'Cash & Bank');
+  return `<div class="toolbar"><span class="sp"></span><button class="btn" onclick="bankExpense()">Record expense / income</button><button class="btn primary" onclick="transferEditor()">Transfer between accounts</button></div>
+  <div class="grid g3">${accs.map(a => `<div class="card kpi clickable" onclick="go('ledger',{accountId:'${a.id}'})"><div class="l">${a.code} · ${a.active ? 'active' : 'inactive'}</div><div class="v ${net(b[a.id], a) < 0 ? 'neg' : ''}">${fmt(net(b[a.id], a))}</div><div class="s">${esc(a.name)}</div></div>`).join('')}</div>
+  <div class="card"><h3>Recent movements (all cash & bank accounts)</h3><table><tr><th>Date</th><th>Journal</th><th>Description</th><th>Account</th><th class="num">In</th><th class="num">Out</th></tr>${c.journals.filter(j => j.status !== 'void').flatMap(j => j.lines.filter(l => accs.some(a => a.id === l.accountId)).map(l => ({ ...l, j }))).sort((x, y) => y.j.date.localeCompare(x.j.date)).slice(0, 25).map(l => `<tr class="clickable" onclick="showJournal('${l.j.id}')"><td>${fmtDate(l.j.date)}</td><td class="mono">${l.j.no}</td><td>${esc(l.j.memo)}</td><td class="muted">${esc(acc(l.accountId).name)}</td><td class="num">${fmt(l.debit, true)}</td><td class="num">${fmt(l.credit, true)}</td></tr>`).join('')}</table></div>`;
+} };
+function transferEditor() { if (!guard('post')) return; openModal(`<h2>Transfer between accounts</h2><div class="row"><div class="field"><label class="f">From</label>${sel('t_from', bankOpts(), ctl('bank').id)}</div><div class="field"><label class="f">To</label>${sel('t_to', bankOpts(), ctl('cash').id)}</div></div><div class="row"><div class="field"><label class="f">Date</label><input type="date" id="t_date" value="${today()}"></div><div class="field"><label class="f">Amount</label><input type="number" step="0.01" id="t_amt"></div><div class="field" style="flex:2"><label class="f">Reference</label><input type="text" id="t_ref"></div></div>
+  <div class="actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn primary" onclick="tryDo(()=>{if(fval('t_from')===fval('t_to'))throw new Error('Choose two different accounts.');postJournal({date:fval('t_date'),memo:'Transfer '+(fval('t_ref')||''),source:'transfer',lines:[{accountId:fval('t_to'),debit:+fval('t_amt'),credit:0},{accountId:fval('t_from'),debit:0,credit:+fval('t_amt')}]})},'Transfer posted')">Post transfer</button></div>`); }
+function bankExpense() { if (!guard('post')) return; openModal(`<h2>Record expense or income</h2><p class="muted">Direct bank/cash transactions without a bill or invoice (fuel, fees, sundry income).</p><div class="row"><div class="field"><label class="f">Type</label>${sel('e_kind', [['exp', 'Money out (expense)'], ['inc', 'Money in (income)']], 'exp')}</div><div class="field"><label class="f">Bank / cash account</label>${sel('e_bank', bankOpts(), ctl('bank').id)}</div></div><div class="row"><div class="field" style="flex:2"><label class="f">Expense / income account</label>${sel('e_acc', accOpts(a => a.type === 'Expense' || a.type === 'Income'), '')}</div><div class="field"><label class="f">Date</label><input type="date" id="e_date" value="${today()}"></div></div><div class="row"><div class="field"><label class="f">Net amount</label><input type="number" step="0.01" id="e_amt"></div><div class="field"><label class="f">${C().taxLabel}</label>${sel('e_tax', C().taxRates.map(t => [t.id, `${t.name} ${t.rate}%`]), C().taxRates[1].id)}</div><div class="field" style="flex:2"><label class="f">Description</label><input type="text" id="e_memo"></div></div>
+  <div class="actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn primary" onclick="tryDo(()=>{const net=+fval('e_amt');const tr=C().taxRates.find(t=>t.id===fval('e_tax'));const tax=tr&&!tr.exempt?r2(net*tr.rate/100):0;const exp=fval('e_kind')==='exp';const lines=exp?[{accountId:fval('e_acc'),debit:net,credit:0},...(tax?[{accountId:ctl('taxin').id,debit:tax,credit:0,memo:C().taxLabel}]:[]),{accountId:fval('e_bank'),debit:0,credit:r2(net+tax)}]:[{accountId:fval('e_bank'),debit:r2(net+tax),credit:0},...(tax?[{accountId:ctl('taxout').id,debit:0,credit:tax,memo:C().taxLabel}]:[]),{accountId:fval('e_acc'),debit:0,credit:net}];postJournal({date:fval('e_date'),memo:fval('e_memo')||(exp?'Expense':'Income'),source:'bank',lines})},'Posted')">Post</button></div>`); }
+
+VIEWS.reconcile = { title: () => 'Bank reconciliation', body: c => {
+  const p = S.param || {}; const aid = p.accountId || ctl('bank').id; const to = p.to || today(); const a = acc(aid);
+  const L = ledgerLines(aid, null, to); const cleared = new Set(c.bankLines.filter(x => x.cleared).map(x => x.matchJid));
+  const bookBal = L.closing; const unclearedIn = L.lines.filter(l => !cleared.has(l.jid) && l.debit).reduce((s, l) => s + l.debit, 0), unclearedOut = L.lines.filter(l => !cleared.has(l.jid) && l.credit).reduce((s, l) => s + l.credit, 0);
+  const stmtBal = +(p.stmt ?? r2(bookBal - unclearedIn + unclearedOut));
+  const diff = r2(stmtBal + unclearedIn - unclearedOut - bookBal);
+  return `<div class="toolbar">${sel('rc_acc', bankOpts(), aid, `onchange="S.param={...S.param,accountId:this.value};render()"`)}<label class="f" style="margin:0">Statement date</label><input type="date" value="${to}" onchange="S.param={...S.param,to:this.value};render()"><label class="f" style="margin:0">Statement balance</label><input type="number" step="0.01" value="${stmtBal}" onchange="S.param={...S.param,stmt:+this.value};render()"><span class="sp"></span><button class="btn" onclick="importStatement()">Paste statement lines</button></div>
+  <div class="grid g4"><div class="card kpi"><div class="l">Balance per books</div><div class="v">${fmt(bookBal)}</div></div><div class="card kpi"><div class="l">Deposits in transit</div><div class="v">${fmt(unclearedIn)}</div></div><div class="card kpi"><div class="l">Outstanding payments</div><div class="v">${fmt(unclearedOut)}</div></div><div class="card kpi"><div class="l">Difference</div><div class="v ${diff ? 'neg' : ''}" style="color:${diff ? 'var(--red)' : 'var(--green)'}">${diff ? fmt(diff) : 'Reconciled'}</div></div></div>
+  <div class="card"><h3>Book entries — tick the ones that appear on the statement</h3><table><tr><th></th><th>Date</th><th>Journal</th><th>Description</th><th class="num">In</th><th class="num">Out</th></tr>${L.lines.map(l => `<tr><td><input type="checkbox" ${cleared.has(l.jid) ? 'checked' : ''} onchange="toggleClear('${l.jid}','${l.date}','${esc(l.jmemo).replace(/'/g, '')}',${r2(l.debit - l.credit)},this.checked)"></td><td>${fmtDate(l.date)}</td><td class="mono">${l.no}</td><td>${esc(l.jmemo)}</td><td class="num">${fmt(l.debit, true)}</td><td class="num">${fmt(l.credit, true)}</td></tr>`).join('')}</table></div>
+  ${c.bankLines.filter(x => !x.matchJid).length ? `<div class="card"><h3>Imported statement lines not yet matched</h3><table><tr><th>Date</th><th>Description</th><th class="num">Amount</th><th></th></tr>${c.bankLines.filter(x => !x.matchJid).map(x => `<tr><td>${fmtDate(x.date)}</td><td>${esc(x.desc)}</td><td class="num">${fmt(x.amount)}</td><td class="num"><button class="btn sm" onclick="matchLine('${x.id}','${aid}')">Find match</button></td></tr>`).join('')}</table></div>` : ''}`;
+} };
+function toggleClear(jid, date, desc, amount, on) { const c = C(); let bl = c.bankLines.find(x => x.matchJid === jid); if (on) { if (!bl) { bl = c.bankLines.find(x => !x.matchJid && x.amount === amount && Math.abs((new Date(x.date) - new Date(date)) / 864e5) <= 5) || { id: uid(), date, desc, amount }; if (!c.bankLines.includes(bl)) c.bankLines.push(bl); bl.matchJid = jid; } bl.cleared = true; } else if (bl) { bl.cleared = false; if (bl.imported) bl.matchJid = null; else c.bankLines.splice(c.bankLines.indexOf(bl), 1); } save(); render(); }
+function matchLine(id, aid) { const bl = C().bankLines.find(x => x.id === id); const L = ledgerLines(aid, null, today()); const cand = L.lines.filter(l => r2(l.debit - l.credit) === bl.amount && !C().bankLines.some(x => x.matchJid === l.jid)); if (!cand.length) return toast('No book entry with the same amount. Record it first.'); const l = cand[0]; bl.matchJid = l.jid; bl.cleared = true; commit(`Matched to ${l.no}`); }
+function importStatement() { openModal(`<h2>Paste statement lines</h2><p class="muted">One line per row: <span class="mono">date, description, amount</span> (negative for money out). Example:<br><span class="mono">${today()}, Card settlement, 1250.00</span></p><textarea id="st_txt" style="min-height:160px"></textarea><div class="actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn primary" onclick="tryDo(()=>{let n=0;fval('st_txt').split('\\n').forEach(r=>{const p=r.split(',');if(p.length<3)return;const amt=+p.pop();C().bankLines.push({id:uid(),date:p[0].trim(),desc:p.slice(1).join(',').trim(),amount:r2(amt),cleared:false,imported:true});n++});if(!n)throw new Error('No valid lines found.')},'Statement lines imported')">Import</button></div>`); }
+
+VIEWS.assets = { title: () => 'Fixed assets', body: c => {
+  const cur = today().slice(0, 7);
+  return `<div class="toolbar"><span class="sp"></span><button class="btn" onclick="depModal()">Run monthly depreciation</button><button class="btn primary" onclick="editAsset()">New asset</button></div>
+  <div class="card"><table><tr><th>Code</th><th>Asset</th><th>Category</th><th>Purchased</th><th>Method</th><th class="num">Cost</th><th class="num">Accumulated</th><th class="num">Net book value</th><th class="num">Monthly</th><th>Status</th><th></th></tr>${c.assets.map(a => `<tr class="${a.status !== 'active' ? 'muted' : ''}"><td class="mono">${esc(a.code)}</td><td>${esc(a.name)}</td><td class="muted">${esc(a.category)}</td><td>${fmtDate(a.purchaseDate)}</td><td class="muted">${a.method === 'declining' ? a.rate + '% declining' : 'Straight line ' + a.lifeMonths + ' mo'}</td><td class="num">${fmt(a.cost)}</td><td class="num">${fmt(a.accumulated || 0)}</td><td class="num">${fmt(a.cost - (a.accumulated || 0))}</td><td class="num">${a.status === 'active' ? fmt(depreciationFor(a)) : ''}</td><td><span class="tag ${a.status === 'active' ? 'posted' : 'void'}">${a.status}</span>${a.runs?.includes(cur) ? ' <span class="tag paid">this month done</span>' : ''}</td><td class="num"><button class="btn sm" onclick="editAsset('${a.id}')">Edit</button>${a.status === 'active' && can('post') ? ` <button class="btn sm" onclick="disposeAsset('${a.id}')">Dispose</button>` : ''}</td></tr>`).join('') || '<tr><td colspan="11" class="empty">No assets registered. Add one to track depreciation automatically.</td></tr>'}
+  <tr class="total"><td colspan="5">Total</td><td class="num">${fmt(c.assets.filter(a => a.status === 'active').reduce((s, a) => s + a.cost, 0))}</td><td class="num">${fmt(c.assets.filter(a => a.status === 'active').reduce((s, a) => s + (a.accumulated || 0), 0))}</td><td class="num">${fmt(c.assets.filter(a => a.status === 'active').reduce((s, a) => s + a.cost - (a.accumulated || 0), 0))}</td><td colspan="3"></td></tr></table></div>`;
+} };
+function editAsset(id) {
+  if (!guard('edit')) return; const a = id ? C().assets.find(x => x.id === id) : { code: `FA-${String(C().assets.length + 1).padStart(3, '0')}`, name: '', category: '', assetAccountId: ctl('fa').id, accDepAccountId: ctl('accdep').id, expenseAccountId: ctl('depexp').id, purchaseDate: today(), cost: 0, salvage: 0, method: 'straight', lifeMonths: 60, rate: 20, accumulated: 0, status: 'active', runs: [] };
+  openModal(`<h2>${id ? 'Edit asset' : 'New asset'}</h2><div class="row"><div class="field"><label class="f">Code</label><input type="text" id="fa_code" value="${esc(a.code)}"></div><div class="field" style="flex:3"><label class="f">Name</label><input type="text" id="fa_name" value="${esc(a.name)}"></div><div class="field"><label class="f">Category</label><input type="text" id="fa_cat" value="${esc(a.category)}"></div></div>
+  <div class="row"><div class="field"><label class="f">Purchase date</label><input type="date" id="fa_date" value="${a.purchaseDate}"></div><div class="field"><label class="f">Cost</label><input type="number" step="0.01" id="fa_cost" value="${a.cost}"></div><div class="field"><label class="f">Salvage value</label><input type="number" step="0.01" id="fa_salv" value="${a.salvage}"></div><div class="field"><label class="f">Depreciation to date</label><input type="number" step="0.01" id="fa_acc" value="${a.accumulated || 0}"></div></div>
+  <div class="row"><div class="field"><label class="f">Method</label>${sel('fa_method', [['straight', 'Straight line'], ['declining', 'Declining balance']], a.method)}</div><div class="field"><label class="f">Useful life (months)</label><input type="number" id="fa_life" value="${a.lifeMonths}"></div><div class="field"><label class="f">Annual rate % (declining)</label><input type="number" step="0.1" id="fa_rate" value="${a.rate}"></div></div>
+  <div class="row"><div class="field"><label class="f">Asset account</label>${sel('fa_a1', accOpts(x => x.subtype === 'Fixed Asset'), a.assetAccountId)}</div><div class="field"><label class="f">Accumulated depreciation</label>${sel('fa_a2', accOpts(x => x.subtype === 'Accumulated Depreciation'), a.accDepAccountId)}</div><div class="field"><label class="f">Expense account</label>${sel('fa_a3', accOpts(x => x.type === 'Expense'), a.expenseAccountId)}</div></div>
+  ${id ? '' : '<div class="field"><label><input type="checkbox" id="fa_post" checked> Post the purchase journal now (Dr asset / Cr Accounts Payable or bank)</label> ' + sel('fa_pay', [...bankOpts(), [ctl('ap').id, 'Accounts Payable (on credit)']], ctl('bank').id) + '</div>'}
+  <div class="actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn primary" onclick="saveAsset('${id || ''}')">Save asset</button></div>`, true);
+}
+function saveAsset(id) { tryDo(() => { const d = { code: fval('fa_code'), name: fval('fa_name'), category: fval('fa_cat'), purchaseDate: fval('fa_date'), cost: +fval('fa_cost'), salvage: +fval('fa_salv'), accumulated: +fval('fa_acc'), method: fval('fa_method'), lifeMonths: +fval('fa_life') || 1, rate: +fval('fa_rate'), assetAccountId: fval('fa_a1'), accDepAccountId: fval('fa_a2'), expenseAccountId: fval('fa_a3') };
+  if (!d.name || !d.cost) throw new Error('Name and cost are required.');
+  if (id) Object.assign(C().assets.find(x => x.id === id), d); else { C().assets.push({ id: uid(), status: 'active', runs: [], ...d }); if ($('#fa_post')?.checked) { const pay = fval('fa_pay'); if (acc(pay).ctl === 'ap') throw new Error('For credit purchases, enter a supplier bill coded to the asset account instead.'); postJournal({ date: d.purchaseDate, memo: `Purchase of ${d.name}`, source: 'asset', lines: [{ accountId: d.assetAccountId, debit: d.cost, credit: 0 }, { accountId: pay, debit: 0, credit: d.cost }] }); } } audit('Save asset', d.name); }, 'Asset saved'); }
+function disposeAsset(id) { if (!guard('post')) return; const a = C().assets.find(x => x.id === id); const nbv = r2(a.cost - (a.accumulated || 0));
+  openModal(`<h2>Dispose ${esc(a.name)}</h2><p class="muted">Net book value ${fmt(nbv)}. Proceeds above NBV post as other income; below NBV as a loss.</p><div class="row"><div class="field"><label class="f">Date</label><input type="date" id="dp_date" value="${today()}"></div><div class="field"><label class="f">Proceeds</label><input type="number" step="0.01" id="dp_amt" value="0"></div><div class="field"><label class="f">Received into</label>${sel('dp_bank', bankOpts(), ctl('bank').id)}</div></div>
+  <div class="actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn primary" onclick="tryDo(()=>{const pr=+fval('dp_amt');const gain=r2(pr-${nbv});const lines=[{accountId:'${a.accDepAccountId}',debit:${a.accumulated || 0},credit:0,memo:'Remove accumulated depreciation'},{accountId:'${a.assetAccountId}',debit:0,credit:${a.cost},memo:'Remove asset cost'}];if(pr)lines.push({accountId:fval('dp_bank'),debit:pr,credit:0,memo:'Proceeds'});if(gain>0)lines.push({accountId:accByCode('4900').id,debit:0,credit:gain,memo:'Gain on disposal'});if(gain<0)lines.push({accountId:accByCode('7900').id,debit:-gain,credit:0,memo:'Loss on disposal'});postJournal({date:fval('dp_date'),memo:'Disposal of ${esc(a.name)}',source:'asset',lines});const x=C().assets.find(z=>z.id==='${id}');x.status='disposed';x.disposedOn=fval('dp_date')},'Asset disposed')">Post disposal</button></div>`); }
+function depModal() { if (!guard('post')) return; const d = new Date(); d.setMonth(d.getMonth() - 1); openModal(`<h2>Run monthly depreciation</h2><p class="muted">Posts one journal: Dr Depreciation expense / Cr Accumulated depreciation for every active asset not yet depreciated for the month.</p><div class="field"><label class="f">Month</label><input type="month" id="dep_m" value="${today().slice(0, 7)}"></div><div class="actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn primary" onclick="tryDo(()=>{const r=runDepreciation(fval('dep_m'));toast(r.count+' asset(s) depreciated')},'Depreciation posted')">Run</button></div>`); }
+
+VIEWS.tax = { title: c => `${c.taxLabel} returns`, body: c => {
+  const p = S.param || {}; const from = p.from || (() => { const d = new Date(); d.setMonth(d.getMonth() - 2); return d.toISOString().slice(0, 7) + '-01'; })(), to = p.to || today();
+  const outAcc = ctl('taxout'), inAcc = ctl('taxin'); const b = balances(from, to); const out = net(b[outAcc.id], outAcc), inp = net(b[inAcc.id], inAcc);
+  const sales = c.docs.filter(d => (d.type === 'INV' || d.type === 'CN') && d.status !== 'draft' && d.status !== 'void' && d.date >= from && d.date <= to), purch = c.docs.filter(d => (d.type === 'BILL' || d.type === 'DN') && d.status !== 'draft' && d.status !== 'void' && d.date >= from && d.date <= to);
+  const byRate = docs => { const m = {}; docs.forEach(d => d.lines.forEach(l => { const t = c.taxRates.find(x => x.id === l.taxId); const k = t ? `${t.name} ${t.rate}%` : 'No tax'; const s = isCreditDoc(d) ? -1 : 1; const r = m[k] ||= { net: 0, tax: 0 }; r.net += s * l.amount; r.tax += s * (l.tax || 0); })); return m; };
+  const rs = byRate(sales), rp = byRate(purch);
+  return `<div class="toolbar"><input type="date" value="${from}" onchange="S.param={...S.param,from:this.value};render()"><input type="date" value="${to}" onchange="S.param={...S.param,to:this.value};render()"><span class="sp"></span><button class="btn" onclick="editTaxRates()">Tax rates</button>${can('post') ? `<button class="btn primary" onclick="settleTax(${r2(out - inp)})">Record ${c.taxLabel} settlement</button>` : ''}</div>
+  <div class="grid g3"><div class="card kpi"><div class="l">Output ${c.taxLabel} on sales</div><div class="v">${fmt(out)}</div></div><div class="card kpi"><div class="l">Input ${c.taxLabel} on purchases</div><div class="v">${fmt(inp)}</div></div><div class="card kpi"><div class="l">${out - inp >= 0 ? 'Payable to authority' : 'Refund due'}</div><div class="v">${fmt(Math.abs(out - inp))}</div></div></div>
+  <div class="grid g2"><div class="card"><h3>Sales by rate</h3><table><tr><th>Rate</th><th class="num">Net</th><th class="num">${c.taxLabel}</th></tr>${Object.entries(rs).map(([k, v]) => `<tr><td>${k}</td><td class="num">${fmt(v.net)}</td><td class="num">${fmt(v.tax)}</td></tr>`).join('')}</table></div><div class="card"><h3>Purchases by rate</h3><table><tr><th>Rate</th><th class="num">Net</th><th class="num">${c.taxLabel}</th></tr>${Object.entries(rp).map(([k, v]) => `<tr><td>${k}</td><td class="num">${fmt(v.net)}</td><td class="num">${fmt(v.tax)}</td></tr>`).join('')}</table></div></div>
+  <p class="muted">Figures are from posted invoices, bills and direct bank entries in the period. Adjust the period to match your filing frequency.</p>`;
+} };
+function editTaxRates() { if (!guard('settings')) return; const c = C(); openModal(`<h2>${c.taxLabel} rates</h2><div class="field"><label class="f">Tax name shown on documents</label><input type="text" id="tx_label" value="${esc(c.taxLabel)}"></div><table id="tx_tbl"><tr><th>Name</th><th class="num">Rate %</th><th>Exempt</th></tr>${c.taxRates.map((t, i) => `<tr><td><input type="text" value="${esc(t.name)}" onchange="C().taxRates[${i}].name=this.value"></td><td><input type="number" step="0.01" value="${t.rate}" onchange="C().taxRates[${i}].rate=+this.value"></td><td><input type="checkbox" ${t.exempt ? 'checked' : ''} onchange="C().taxRates[${i}].exempt=this.checked"></td></tr>`).join('')}</table><div style="margin-top:8px"><button class="btn sm" onclick="C().taxRates.push({id:uid(),name:'New rate',rate:0});editTaxRates()">+ Add rate</button></div><div class="actions"><button class="btn primary" onclick="C().taxLabel=fval('tx_label')||'Tax';closeModal();commit('Tax settings saved')">Done</button></div>`); }
+function settleTax(amount) { openModal(`<h2>Record ${C().taxLabel} settlement</h2><p class="muted">Clears output and input tax for the period against the bank.</p><div class="row"><div class="field"><label class="f">Date</label><input type="date" id="ts_date" value="${today()}"></div><div class="field"><label class="f">Output tax</label><input type="number" step="0.01" id="ts_out" value="${r2(net(balances(null, today())[ctl('taxout').id], ctl('taxout')))}"></div><div class="field"><label class="f">Input tax</label><input type="number" step="0.01" id="ts_in" value="${r2(net(balances(null, today())[ctl('taxin').id], ctl('taxin')))}"></div><div class="field"><label class="f">Bank</label>${sel('ts_bank', bankOpts(), ctl('bank').id)}</div></div><div class="actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn primary" onclick="tryDo(()=>{const o=+fval('ts_out'),i=+fval('ts_in'),n=r2(o-i);const lines=[];if(o)lines.push({accountId:ctl('taxout').id,debit:o,credit:0});if(i)lines.push({accountId:ctl('taxin').id,debit:0,credit:i});lines.push(n>=0?{accountId:fval('ts_bank'),debit:0,credit:n}:{accountId:fval('ts_bank'),debit:-n,credit:0});postJournal({date:fval('ts_date'),memo:C().taxLabel+' settlement',source:'tax',lines})},'Settlement posted')">Post</button></div>`); }
+
+VIEWS.periods = { title: () => 'Periods & year end', body: c => {
+  const years = [...new Set(c.journals.map(j => fyStart(j.date)))].sort(); const closed = c.journals.filter(j => j.source === 'close');
+  return `<div class="grid g2"><div class="card"><h3>Period lock</h3><p class="muted">Nothing can be posted on or before the lock date. Use it after month-end review or filing.</p><div class="row"><div class="field"><label class="f">Lock date</label><input type="date" id="lk" value="${c.lockDate}"></div><div class="field" style="flex:0"><button class="btn primary" onclick="if(guard('lock'))tryDo(()=>{C().lockDate=fval('lk');audit('Period lock',fval('lk')||'cleared')},'Lock updated')">Apply</button></div></div></div>
+  <div class="card"><h3>Year-end close</h3><p class="muted">Transfers the year's income and expenses to Retained Earnings and locks the year. Reports still show the year's P&L (closing entries are excluded from P&L reports).</p>${years.map(y => { const e = fyEnd(y); const done = closed.find(j => j.date === e); return `<div class="row" style="margin-bottom:8px"><div>FY ${fmtDate(y)} – ${fmtDate(e)}</div><div style="flex:0">${done ? `<span class="tag paid">closed · ${done.no}</span>` : e <= today() && can('lock') ? `<button class="btn sm" onclick="if(confirm('Close the year ending ${e}? This posts a closing journal and locks the period.'))tryDo(()=>yearEndClose('${e}'),'Year closed')">Close year</button>` : '<span class="tag draft">open</span>'}</div></div>`; }).join('')}</div></div>
+  <div class="card"><h3>Integrity check</h3>${integrityCheck()}</div>`;
+} };
+function integrityCheck() { const c = C(); const b = balances(); let dr = 0, cr = 0; for (const v of Object.values(b)) { dr += v.dr; cr += v.cr; } const unbalanced = c.journals.filter(j => r2(j.lines.reduce((s, l) => s + l.debit - l.credit, 0)) !== 0);
+  const ar = ctl('ar'), ap = ctl('ap'); const arBal = net(b[ar.id], ar), apBal = net(b[ap.id], ap); const arDocs = r2(c.docs.filter(d => d.type === 'INV' && d.status === 'posted').reduce((s, d) => s + docOutstanding(d), 0) - c.docs.filter(d => d.type === 'CN' && d.status === 'posted').reduce((s, d) => s + docOutstanding(d), 0)), apDocs = r2(c.docs.filter(d => d.type === 'BILL' && d.status === 'posted').reduce((s, d) => s + docOutstanding(d), 0) - c.docs.filter(d => d.type === 'DN' && d.status === 'posted').reduce((s, d) => s + docOutstanding(d), 0));
+  const row = (ok, t) => `<div class="notice ${ok ? 'ok' : 'err'}">${ok ? '✓' : '✗'} ${t}</div>`;
+  return row(r2(dr - cr) === 0, `All journals balance: total debits ${fmt(dr)} = credits ${fmt(cr)}`) + row(!unbalanced.length, `${unbalanced.length} unbalanced journal(s)`) + row(Math.abs(arBal - arDocs) < 0.01, `Receivable control ${fmt(arBal)} vs open invoices ${fmt(arDocs)}${Math.abs(arBal - arDocs) >= 0.01 ? ' — difference is unapplied receipts / manual AR journals' : ''}`) + row(Math.abs(apBal - apDocs) < 0.01, `Payable control ${fmt(apBal)} vs open bills ${fmt(apDocs)}${Math.abs(apBal - apDocs) >= 0.01 ? ' — difference is unapplied payments / manual AP journals' : ''}`); }
+/* ===================== REPORTS ===================== */
+const REPORTS = ['Trial balance', 'Profit & loss', 'Balance sheet', 'Cash flow', 'Receivables ageing', 'Payables ageing', 'Sales by customer', 'Expenses by account', 'Journal register'];
+VIEWS.reports = { title: () => 'Financial reports', body: c => {
+  const p = S.param || {}; const r = p.r || 0; const from = p.from || fyStart(today()), to = p.to || today();
+  const head = `<div class="tabs no-print">${REPORTS.map((n, i) => `<button class="${r === i ? 'on' : ''}" onclick="S.param={...S.param,r:${i}};render()">${n}</button>`).join('')}</div>
+  <div class="toolbar"><input type="date" value="${from}" onchange="S.param={...S.param,from:this.value};render()"><input type="date" value="${to}" onchange="S.param={...S.param,to:this.value};render()"><button class="btn sm" onclick="S.param={...S.param,from:fyStart(today()),to:today()};render()">This FY</button><button class="btn sm" onclick="const d=new Date();S.param={...S.param,from:d.toISOString().slice(0,7)+'-01',to:today()};render()">This month</button><button class="btn sm" onclick="const s=fyStart(today());const y=+s.slice(0,4)-1;S.param={...S.param,from:s.replace(/^\\d{4}/,y),to:addDays(s,-1)};render()">Last FY</button><span class="sp"></span><button class="btn" onclick="exportReport()">Export CSV</button><button class="btn" onclick="window.print()">Print</button></div>`;
+  const rh = (title, sub) => `<div class="report-head"><div><h2>${title}</h2><div class="meta">${esc(c.name)} · ${sub}</div></div><div class="meta">Amounts in ${c.currency}</div></div>`;
+  let body = '';
+  window._exportRows = null;
+  if (r === 0) { // Trial balance
+    const b = balances(null, to, { excludeClose: false }); const rows = []; let td = 0, tc = 0;
+    for (const a of [...c.accounts].sort((x, y) => x.code.localeCompare(y.code))) { const v = b[a.id]; if (!v) continue; const n = r2(v.dr - v.cr); if (!n) continue; const dr = n > 0 ? n : 0, cr = n < 0 ? -n : 0; td += dr; tc += cr; rows.push([a.code, a.name, a.type, dr, cr]); }
+    window._exportRows = [['Code', 'Account', 'Type', 'Debit', 'Credit'], ...rows];
+    body = rh('Trial balance', `as at ${fmtDate(to)}`) + `<table><tr><th>Code</th><th>Account</th><th>Type</th><th class="num">Debit</th><th class="num">Credit</th></tr>${rows.map(x => `<tr class="clickable" onclick="go('ledger',{accountId:'${accByCode(x[0]).id}',from:'${from}',to:'${to}'})"><td class="mono">${x[0]}</td><td>${esc(x[1])}</td><td class="muted">${x[2]}</td><td class="num">${fmt(x[3], true)}</td><td class="num">${fmt(x[4], true)}</td></tr>`).join('')}<tr class="total"><td colspan="3">Total</td><td class="num">${fmt(td)}</td><td class="num">${fmt(tc)}</td></tr></table>${r2(td - tc) ? '<div class="notice err">Trial balance does not balance — check journals.</div>' : '<div class="notice ok">Debits equal credits.</div>'}`;
+  } else if (r === 1) { // P&L with comparative
+    const prevFrom = (() => { const y = +from.slice(0, 4) - 1; return from.replace(/^\d{4}/, y); })(), prevTo = (() => { const y = +to.slice(0, 4) - 1; return to.replace(/^\d{4}/, y); })();
+    const b = balances(from, to, { excludeClose: true }), pb = balances(prevFrom, prevTo, { excludeClose: true });
+    const sect = (title, filter) => { const list = c.accounts.filter(filter).sort((x, y) => x.code.localeCompare(y.code)).map(a => ({ a, v: net(b[a.id], a), pv: net(pb[a.id], a) })).filter(x => x.v || x.pv); const t = r2(list.reduce((s, x) => s + x.v, 0)), pt = r2(list.reduce((s, x) => s + x.pv, 0)); return { html: `<tr class="sub"><td colspan="4">${title}</td></tr>${list.map(x => `<tr class="clickable" onclick="go('ledger',{accountId:'${x.a.id}',from:'${from}',to:'${to}'})"><td class="indent1">${x.a.code} ${esc(x.a.name)}</td><td class="num">${fmt(x.v)}</td><td class="num muted">${fmt(x.pv)}</td><td class="num muted">${x.pv ? fmt(x.v - x.pv) : ''}</td></tr>`).join('')}<tr class="sub"><td class="indent1">Total ${title.toLowerCase()}</td><td class="num">${fmt(t)}</td><td class="num muted">${fmt(pt)}</td><td class="num muted">${fmt(t - pt)}</td></tr>`, t, pt, rows: list.map(x => [x.a.code, x.a.name, x.v, x.pv]) }; };
+    const inc = sect('Revenue', a => a.type === 'Income' && a.subtype === 'Sales Revenue'), cogs = sect('Cost of sales', a => a.subtype === 'Cost of Sales'), opx = sect('Operating expenses', a => a.type === 'Expense' && !['Cost of Sales', 'Finance Cost', 'Tax Expense'].includes(a.subtype)), oth = sect('Other income', a => a.subtype === 'Other Income'), fin = sect('Finance costs & tax', a => ['Finance Cost', 'Tax Expense'].includes(a.subtype));
+    const gp = r2(inc.t - cogs.t), pgp = r2(inc.pt - cogs.pt), op = r2(gp - opx.t), pop = r2(pgp - opx.pt), np = r2(op + oth.t - fin.t), pnp = r2(pop + oth.pt - fin.pt);
+    const line = (l, v, pv) => `<tr class="total"><td>${l}</td><td class="num ${v < 0 ? 'neg' : ''}">${fmt(v)}</td><td class="num muted">${fmt(pv)}</td><td class="num muted">${fmt(v - pv)}</td></tr>`;
+    window._exportRows = [['Code', 'Account', 'This period', 'Prior period'], ...inc.rows, ...cogs.rows, ['', 'Gross profit', gp, pgp], ...opx.rows, ['', 'Operating profit', op, pop], ...oth.rows, ...fin.rows, ['', 'Net profit', np, pnp]];
+    body = rh('Profit & loss statement', `${fmtDate(from)} to ${fmtDate(to)}`) + `<table><tr><th></th><th class="num">This period</th><th class="num">Prior year</th><th class="num">Change</th></tr>${inc.html}${cogs.html}${line('Gross profit', gp, pgp)}<tr><td class="muted indent1">Gross margin</td><td class="num muted">${inc.t ? (gp / inc.t * 100).toFixed(1) + '%' : ''}</td><td class="num muted">${inc.pt ? (pgp / inc.pt * 100).toFixed(1) + '%' : ''}</td><td></td></tr>${opx.html}${line('Operating profit', op, pop)}${oth.html}${fin.html}${line('Net profit for the period', np, pnp)}</table>`;
+  } else if (r === 2) { // Balance sheet
+    const b = balances(null, to); const re = ctl('re'); const cur = retainedEarningsAt(to); const ytd = plTotals(fyStart(to), to).profit;
+    const sect = (title, filter, extra=[]) => { const list = c.accounts.filter(filter).sort((x, y) => x.code.localeCompare(y.code)).map(a => ({ n: `${a.code} ${a.name}`, v: net(b[a.id], a), id: a.id })).filter(x => x.v); extra.forEach(e => e.v && list.push(e)); const t = r2(list.reduce((s, x) => s + x.v, 0)); return { html: `<tr class="sub"><td>${title}</td><td></td></tr>${list.map(x => `<tr ${x.id ? `class="clickable" onclick="go('ledger',{accountId:'${x.id}',to:'${to}'})"` : ''}><td class="indent1">${esc(x.n)}</td><td class="num">${fmt(x.v)}</td></tr>`).join('')}<tr class="sub"><td class="indent1">Total ${title.toLowerCase()}</td><td class="num">${fmt(t)}</td></tr>`, t, rows: list.map(x => [title, x.n, x.v]) }; };
+    const ca = sect('Current assets', a => a.type === 'Asset' && !['Fixed Asset', 'Accumulated Depreciation', 'Other Asset'].includes(a.subtype)), fa = sect('Non-current assets', a => a.type === 'Asset' && ['Fixed Asset', 'Accumulated Depreciation', 'Other Asset'].includes(a.subtype));
+    const cl = sect('Current liabilities', a => a.type === 'Liability' && a.subtype !== 'Long-term Liability'), ll = sect('Non-current liabilities', a => a.subtype === 'Long-term Liability');
+    const eq = sect('Equity', a => a.type === 'Equity', [{ n: 'Retained earnings — prior years (unclosed)', v: cur }, { n: 'Current year profit', v: ytd }]);
+    const ta = r2(ca.t + fa.t), tl = r2(cl.t + ll.t), tle = r2(tl + eq.t);
+    window._exportRows = [['Section', 'Account', 'Amount'], ...ca.rows, ...fa.rows, ...cl.rows, ...ll.rows, ...eq.rows];
+    body = rh('Balance sheet', `as at ${fmtDate(to)}`) + `<div class="grid g2"><table>${ca.html}${fa.html}<tr class="total"><td>Total assets</td><td class="num">${fmt(ta)}</td></tr></table><table>${cl.html}${ll.html}<tr class="sub"><td>Total liabilities</td><td class="num">${fmt(tl)}</td></tr>${eq.html}<tr class="total"><td>Total liabilities & equity</td><td class="num">${fmt(tle)}</td></tr></table></div>${r2(ta - tle) ? `<div class="notice err">Out of balance by ${fmt(ta - tle)}.</div>` : '<div class="notice ok">Assets equal liabilities plus equity.</div>'}`;
+  } else if (r === 3) { // Cash flow (indirect)
+    const b0 = balances(null, addDays(from, -1)), b1 = balances(null, to); const pl = plTotals(from, to); const dep = c.accounts.filter(a => a.subtype === 'Depreciation').reduce((s, a) => s + net(balances(from, to, { excludeClose: true })[a.id], a), 0);
+    const delta = f => c.accounts.filter(f).reduce((s, a) => s + net(b1[a.id], a) - net(b0[a.id], a), 0);
+    const dAR = delta(a => a.subtype === 'Accounts Receivable'), dInv = delta(a => a.subtype === 'Inventory'), dOCA = delta(a => a.subtype === 'Other Current Asset'), dAP = delta(a => a.subtype === 'Accounts Payable'), dOCL = delta(a => ['Tax Payable', 'Other Current Liability'].includes(a.subtype));
+    const opCF = r2(pl.profit + dep - dAR - dInv - dOCA + dAP + dOCL);
+    const dFA = delta(a => a.subtype === 'Fixed Asset' || a.subtype === 'Other Asset'), invCF = r2(-dFA);
+    const dLL = delta(a => a.subtype === 'Long-term Liability'), dEq = delta(a => a.type === 'Equity'), finCF = r2(dLL + dEq);
+    const cash0 = c.accounts.filter(a => a.subtype === 'Cash & Bank').reduce((s, a) => s + net(b0[a.id], a), 0), cash1 = c.accounts.filter(a => a.subtype === 'Cash & Bank').reduce((s, a) => s + net(b1[a.id], a), 0);
+    const rows = [['Net profit', pl.profit], ['Add: depreciation', dep], ['(Increase) / decrease in receivables', -dAR], ['(Increase) / decrease in inventory', -dInv], ['(Increase) / decrease in other current assets', -dOCA], ['Increase / (decrease) in payables', dAP], ['Increase / (decrease) in other current liabilities', dOCL]];
+    const R = (l, v, cls='') => `<tr class="${cls}"><td>${l}</td><td class="num ${v < 0 ? 'neg' : ''}">${fmt(v)}</td></tr>`;
+    window._exportRows = [['Line', 'Amount'], ...rows, ['Cash from operations', opCF], ['Cash from investing', invCF], ['Cash from financing', finCF], ['Net change in cash', r2(opCF + invCF + finCF)]];
+    body = rh('Cash flow statement (indirect method)', `${fmtDate(from)} to ${fmtDate(to)}`) + `<table><tr class="sub"><td>Operating activities</td><td></td></tr>${rows.map(x => R(x[0], x[1])).join('')}${R('Net cash from operating activities', opCF, 'total')}<tr class="sub"><td>Investing activities</td><td></td></tr>${R('Purchase / disposal of non-current assets', invCF)}${R('Net cash from investing activities', invCF, 'total')}<tr class="sub"><td>Financing activities</td><td></td></tr>${R('Loans raised / (repaid)', dLL)}${R('Equity introduced / (drawings)', dEq)}${R('Net cash from financing activities', finCF, 'total')}<tr><td>&nbsp;</td><td></td></tr>${R('Net change in cash', r2(opCF + invCF + finCF), 'total')}${R('Cash at start of period', cash0)}${R('Cash at end of period', cash1, 'total')}</table>${Math.abs(r2(cash0 + opCF + invCF + finCF - cash1)) > 0.01 ? `<div class="notice warn">Reconciling difference ${fmt(cash1 - cash0 - opCF - invCF - finCF)} — usually from opening balances posted inside the period.</div>` : ''}`;
+  } else if (r === 4 || r === 5) { // Ageing
+    const isAR = r === 4; const types = isAR ? ['INV', 'CN'] : ['BILL', 'DN']; const kind = isAR ? 'customer' : 'supplier'; const buckets = ['Current', '1–30', '31–60', '61–90', '90+'];
+    const rows = c.parties.filter(p => p.kind === kind).map(p => { const v = [0, 0, 0, 0, 0]; c.docs.filter(d => d.partyId === p.id && types.includes(d.type) && d.status === 'posted' && d.date <= to && docOutstanding(d) > 0).forEach(d => { const o = isCreditDoc(d) ? -docOutstanding(d) : docOutstanding(d); const days = Math.floor((new Date(to) - new Date(d.dueDate)) / 864e5); const i = days <= 0 ? 0 : days <= 30 ? 1 : days <= 60 ? 2 : days <= 90 ? 3 : 4; v[i] += o; }); return { p, v, t: r2(v.reduce((s, x) => s + x, 0)) }; }).filter(x => x.t);
+    const tot = [0, 0, 0, 0, 0]; rows.forEach(x => x.v.forEach((y, i) => tot[i] += y)); const gt = tot.reduce((s, x) => s + x, 0);
+    window._exportRows = [[kind, ...buckets, 'Total'], ...rows.map(x => [x.p.name, ...x.v, x.t])];
+    body = rh(isAR ? 'Receivables ageing' : 'Payables ageing', `as at ${fmtDate(to)}, by days past due`) + `<table><tr><th>${kind[0].toUpperCase() + kind.slice(1)}</th>${buckets.map(b => `<th class="num">${b}</th>`).join('')}<th class="num">Total</th></tr>${rows.map(x => `<tr class="clickable" onclick="partyStatement('${x.p.id}')"><td>${esc(x.p.name)}</td>${x.v.map((y, i) => `<td class="num ${i >= 3 && y ? 'neg' : ''}">${fmt(y, true)}</td>`).join('')}<td class="num">${fmt(x.t)}</td></tr>`).join('')}<tr class="total"><td>Total</td>${tot.map(y => `<td class="num">${fmt(y)}</td>`).join('')}<td class="num">${fmt(gt)}</td></tr><tr><td class="muted">% of total</td>${tot.map(y => `<td class="num muted">${gt ? (y / gt * 100).toFixed(0) + '%' : ''}</td>`).join('')}<td></td></tr></table>`;
+  } else if (r === 6) { // Sales by customer
+    const m = {}; c.docs.filter(d => (d.type === 'INV' || d.type === 'CN') && d.status !== 'draft' && d.status !== 'void' && d.date >= from && d.date <= to).forEach(d => { const s = isCreditDoc(d) ? -1 : 1; const x = m[d.partyId] ||= { n: 0, net: 0, tax: 0 }; x.n++; x.net += s * d.subtotal; x.tax += s * d.taxTotal; });
+    const rows = Object.entries(m).map(([id, x]) => [party(id)?.name, x.n, r2(x.net), r2(x.tax), r2(x.net + x.tax)]).sort((a, b) => b[2] - a[2]); const t = rows.reduce((s, x) => s + x[2], 0);
+    window._exportRows = [['Customer', 'Documents', 'Net', 'Tax', 'Gross'], ...rows];
+    body = rh('Sales by customer', `${fmtDate(from)} to ${fmtDate(to)}`) + `<table><tr><th>Customer</th><th class="num">Documents</th><th class="num">Net sales</th><th class="num">${c.taxLabel}</th><th class="num">Gross</th><th class="num">Share</th></tr>${rows.map(x => `<tr><td>${esc(x[0])}</td><td class="num">${x[1]}</td><td class="num">${fmt(x[2])}</td><td class="num">${fmt(x[3])}</td><td class="num">${fmt(x[4])}</td><td class="num muted">${t ? (x[2] / t * 100).toFixed(1) + '%' : ''}</td></tr>`).join('')}<tr class="total"><td>Total</td><td class="num">${rows.reduce((s, x) => s + x[1], 0)}</td><td class="num">${fmt(t)}</td><td class="num">${fmt(rows.reduce((s, x) => s + x[3], 0))}</td><td class="num">${fmt(rows.reduce((s, x) => s + x[4], 0))}</td><td></td></tr></table>`;
+  } else if (r === 7) { // Expenses by account
+    const b = balances(from, to, { excludeClose: true }); const rows = c.accounts.filter(a => a.type === 'Expense').map(a => [a.code, a.name, a.subtype, net(b[a.id], a)]).filter(x => x[3]).sort((a, b) => b[3] - a[3]); const t = rows.reduce((s, x) => s + x[3], 0); const mx = Math.max(1, ...rows.map(x => x[3]));
+    window._exportRows = [['Code', 'Account', 'Category', 'Amount'], ...rows];
+    body = rh('Expenses by account', `${fmtDate(from)} to ${fmtDate(to)}`) + `<table><tr><th>Account</th><th>Category</th><th class="num">Amount</th><th style="width:30%"></th><th class="num">Share</th></tr>${rows.map(x => `<tr class="clickable" onclick="go('ledger',{accountId:'${accByCode(x[0]).id}',from:'${from}',to:'${to}'})"><td>${x[0]} ${esc(x[1])}</td><td class="muted">${x[2]}</td><td class="num">${fmt(x[3])}</td><td><div style="height:8px;background:#C9A4A4;width:${x[3] / mx * 100}%;border-radius:2px"></div></td><td class="num muted">${(x[3] / t * 100).toFixed(1)}%</td></tr>`).join('')}<tr class="total"><td colspan="2">Total expenses</td><td class="num">${fmt(t)}</td><td colspan="2"></td></tr></table>`;
+  } else { // Journal register
+    const list = c.journals.filter(j => j.date >= from && j.date <= to).sort((a, b) => a.date.localeCompare(b.date) || a.no.localeCompare(b.no));
+    window._exportRows = [['Journal', 'Date', 'Description', 'Account', 'Party', 'Debit', 'Credit']]; list.forEach(j => j.lines.forEach(l => window._exportRows.push([j.no, j.date, j.memo, `${acc(l.accountId)?.code} ${acc(l.accountId)?.name}`, party(l.partyId)?.name || '', l.debit, l.credit])));
+    body = rh('Journal register', `${fmtDate(from)} to ${fmtDate(to)} · ${list.length} journals`) + `<table><tr><th>Journal</th><th>Date</th><th>Account</th><th>Party</th><th class="num">Debit</th><th class="num">Credit</th></tr>${list.map(j => `<tr class="sub"><td class="mono">${j.no}</td><td>${fmtDate(j.date)}</td><td colspan="2">${esc(j.memo)}</td><td colspan="2" class="num muted">${j.source}${j.status === 'reversed' ? ' · reversed' : ''}</td></tr>${j.lines.map(l => `<tr><td></td><td></td><td class="indent1">${acc(l.accountId)?.code} ${esc(acc(l.accountId)?.name)}</td><td class="muted">${esc(party(l.partyId)?.name || '')}</td><td class="num">${fmt(l.debit, true)}</td><td class="num">${fmt(l.credit, true)}</td></tr>`).join('')}`).join('')}</table>`;
+  }
+  return head + `<div class="card">${body}</div>`;
+} };
+function exportReport() { if (!window._exportRows) return; download(REPORTS[S.param?.r || 0].toLowerCase().replace(/[^a-z]+/g, '-') + '.csv', toCSV(window._exportRows), 'text/csv'); }
+
+/* ===================== SETTINGS, USERS, AUDIT, COMPANIES ===================== */
+VIEWS.settings = { title: () => 'Company & users', body: c => `<div class="grid g2"><div class="card"><h3>Company profile</h3>
+  <div class="field"><label class="f">Legal name</label><input type="text" id="c_name" value="${esc(c.name)}"></div><div class="row"><div class="field"><label class="f">Currency</label><input type="text" id="c_cur" value="${esc(c.currency)}" maxlength="3"></div><div class="field"><label class="f">Financial year starts</label>${sel('c_fy', MONTHS.map((m, i) => [String(i + 1), m]), String(c.fyStartMonth))}</div><div class="field"><label class="f">Tax registration no.</label><input type="text" id="c_tax" value="${esc(c.taxId)}"></div></div><div class="field"><label class="f">Address</label><textarea id="c_addr">${esc(c.address)}</textarea></div>
+  <h3>Document numbering (next number)</h3><div class="row">${Object.entries(c.numbering).map(([k, v]) => `<div class="field"><label class="f">${k}</label><input type="number" id="n_${k}" value="${v}"></div>`).join('')}</div>
+  <div class="actions" style="justify-content:flex-start"><button class="btn primary" onclick="if(guard('settings'))tryDo(()=>{const c=C();c.name=fval('c_name');c.currency=fval('c_cur').toUpperCase()||'USD';c.fyStartMonth=+fval('c_fy');c.taxId=fval('c_tax');c.address=fval('c_addr');Object.keys(c.numbering).forEach(k=>c.numbering[k]=+fval('n_'+k)||1);audit('Update company','profile')},'Company saved')">Save company</button><button class="btn danger" onclick="deleteCompany()">Delete this company</button></div></div>
+  <div><div class="card"><h3>Users & roles</h3><table><tr><th>Name</th><th>Email</th><th>Role</th><th></th></tr>${S.users.map(u => `<tr><td>${esc(u.name)}</td><td class="muted">${esc(u.email)}</td><td>${ROLES[u.role]}</td><td class="num"><button class="btn sm" onclick="editUser('${u.id}')">Edit</button></td></tr>`).join('')}</table><div style="margin-top:8px"><button class="btn sm" onclick="editUser()">+ Add user</button></div>
+  <p class="muted">Administrator: everything. Accountant: post and edit, no settings or locks. Viewer: read-only.</p></div>
+  <div class="card"><h3>Backup & restore</h3><p class="muted">Download all companies as a JSON file, or restore from one. Data is stored in this browser until you move to a server.</p><button class="btn" onclick="download('daftar-backup-'+today()+'.json',JSON.stringify({companies:S.companies,users:S.users},null,1),'application/json')">Download backup</button> <label class="btn" style="display:inline-block">Restore backup <input type="file" accept=".json" style="display:none" onchange="restoreBackup(this.files[0])"></label> <button class="btn danger" onclick="if(confirm('Reset everything and reload the demo company?')){localStorage.removeItem(KEY);location.reload()}">Reset to demo</button></div></div></div>` };
+function editUser(id) { if (!guard('settings')) return; const u = id ? S.users.find(x => x.id === id) : { name: '', email: '', role: 'accountant' }; openModal(`<h2>${id ? 'Edit' : 'Add'} user</h2><div class="field"><label class="f">Name</label><input type="text" id="u_name" value="${esc(u.name)}"></div><div class="field"><label class="f">Email</label><input type="email" id="u_email" value="${esc(u.email)}"></div><div class="field"><label class="f">Role</label>${sel('u_role', Object.entries(ROLES), u.role)}</div><div class="actions">${id && S.users.length > 1 && id !== S.currentUser.id ? `<button class="btn danger" onclick="S.users=S.users.filter(x=>x.id!=='${id}');closeModal();commit('User removed')">Remove</button>` : ''}<button class="btn" onclick="closeModal()">Cancel</button><button class="btn primary" onclick="tryDo(()=>{const d={name:fval('u_name'),email:fval('u_email'),role:fval('u_role')};if(!d.name)throw new Error('Name is required.');if('${id || ''}')Object.assign(S.users.find(x=>x.id==='${id}'),d);else S.users.push({id:uid(),...d});audit('Save user',d.name)},'User saved')">Save</button></div>`); }
+function restoreBackup(f) { if (!f) return; const rd = new FileReader(); rd.onload = () => { try { const d = JSON.parse(rd.result); if (!d.companies?.length) throw new Error('Not a Daftar backup.'); S.companies = d.companies; S.users = d.users || S.users; S.activeId = d.companies[0].id; S.currentUser = S.users[0]; commit('Backup restored'); } catch (e) { toast(e.message); } }; rd.readAsText(f); }
+function deleteCompany() { if (!guard('settings')) return; if (S.companies.length < 2) return toast('You need at least one company.'); if (!confirm(`Delete ${C().name} and all its books? This cannot be undone.`)) return; S.companies = S.companies.filter(c => c.id !== S.activeId); S.activeId = S.companies[0].id; commit('Company deleted'); go('dashboard'); }
+function companyForm() { return `<h2>New company</h2><p class="muted">Starts with a standard chart of accounts you can rename or extend.</p><div class="field"><label class="f">Company name</label><input type="text" id="nc_name"></div><div class="row"><div class="field"><label class="f">Currency code</label><input type="text" id="nc_cur" value="USD" maxlength="3"></div><div class="field"><label class="f">Financial year starts</label>${sel('nc_fy', MONTHS.map((m, i) => [String(i + 1), m]), '1')}</div><div class="field"><label class="f">Tax name</label><input type="text" id="nc_tax" value="VAT"></div><div class="field"><label class="f">Standard rate %</label><input type="number" step="0.01" id="nc_rate" value="5"></div></div><div class="actions"><button class="btn" onclick="closeModal();render()">Cancel</button><button class="btn primary" onclick="tryDo(()=>{const n=fval('nc_name').trim();if(!n)throw new Error('Enter a company name.');const c=newCompany(n,fval('nc_cur').toUpperCase()||'USD',+fval('nc_fy'),{taxLabel:fval('nc_tax')||'Tax',taxRate:+fval('nc_rate')});S.companies.push(c);S.activeId=c.id;audit('Company created',n)},'Company created')">Create company</button></div>`; }
+VIEWS.audit = { title: () => 'Audit log', body: c => `<div class="card"><table><tr><th>When</th><th>User</th><th>Action</th><th>Detail</th></tr>${c.audit.slice(0, 300).map(a => `<tr><td class="muted">${a.at.replace('T', ' ').slice(0, 19)}</td><td>${esc(a.by)}</td><td>${esc(a.action)}</td><td class="muted">${esc(a.detail)}</td></tr>`).join('') || '<tr><td colspan="4" class="empty">No activity recorded yet.</td></tr>'}</table></div>` };
+
+/* ===================== INIT ===================== */
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+if (!load()) seedDemo(); else S.currentUser = null;
+if (!S.currentUser) S.currentUser = null;
+render();
+</script>
+</body>
+</html>

@@ -1412,6 +1412,58 @@ const _seed6 = seedDemo; seedDemo = function () { _seed6(); const c = C(); ensur
   for (const j of c.journals) for (const l of j.lines) { const a = acc(l.accountId); if (!a || (a.type !== 'Expense' && a.type !== 'Income')) continue;
     if (a.code === '6000') tag(l, 'Operations', 'Warehouse'); else if (a.code === '6100') tag(l, 'Operations', 'Warehouse'); else if (a.code === '6200') tag(l, 'Admin', 'Head office'); else if (a.code === '6400') tag(l, 'Admin', 'Head office'); else if (a.code === '6900') tag(l, 'Admin', 'Head office'); else if (a.code === '6500') tag(l, 'Sales', 'Site A'); else if (a.type === 'Income') tag(l, 'Sales', null); else if (a.subtype === 'Cost of Sales') tag(l, 'Operations', 'Warehouse'); }
   save(); };
+/* ===================== EXTENSION: sample analysis data (reusable) ===================== */
+function loadSampleDimensions(c) {
+  c = c || C(); if (c.dimensions.length) throw new Error('Analysis codes already exist — delete them first to reload the sample.');
+  const mk = (name, vals, required=false) => ({ id: uid(), name, required, active: true, values: vals.map(([n, k]) => ({ id: uid(), name: n, code: k, active: true })) });
+  const dept = mk('Department', [['Sales', 'SAL'], ['Operations', 'OPS'], ['Admin & Finance', 'ADM']]);
+  const cc = mk('Cost centre', [['Head office', 'HO'], ['Warehouse', 'WH'], ['Site A', 'SA'], ['Site B', 'SB']]);
+  const loc = mk('Location', [['Doha', 'DOH'], ['Dubai', 'DXB']]);
+  c.dimensions.push(dept, cc, loc); const V = (d, n) => d.values.find(v => v.name === n).id;
+  const tag = (l, o) => { if (!o) return; l.dims = {}; if (o.d) l.dims[dept.id] = V(dept, o.d); if (o.c) l.dims[cc.id] = V(cc, o.c); if (o.l) l.dims[loc.id] = V(loc, o.l); };
+  const custLoc = {}; c.parties.filter(p => p.kind === 'customer').forEach((p, i) => custLoc[p.id] = i % 3 === 2 ? 'Dubai' : 'Doha');
+  const custCC = {}; c.parties.filter(p => p.kind === 'customer').forEach((p, i) => custCC[p.id] = ['Site A', 'Site B', 'Site A', 'Head office', 'Site B'][i % 5]);
+  let n = 0;
+  for (const j of c.journals) {
+    const docParty = j.lines.find(l => l.partyId)?.partyId; const isSalesDoc = ['INV', 'CN', 'RCT'].includes(j.source);
+    for (const l of j.lines) { const a = acc(l.accountId); if (!a || (a.type !== 'Expense' && a.type !== 'Income')) continue; n++;
+      if (a.type === 'Income') { tag(l, { d: 'Sales', c: custCC[docParty] || 'Head office', l: custLoc[docParty] || 'Doha' }); continue; }
+      if (a.subtype === 'Cost of Sales') { tag(l, { d: 'Operations', c: isSalesDoc ? (custCC[docParty] || 'Warehouse') : 'Warehouse', l: 'Doha' }); continue; }
+      switch (a.code) {
+        case '6000': // salaries split: leave as one line tagged Operations; the demo also adds a departmental split journal below
+          tag(l, { d: 'Operations', c: 'Warehouse', l: 'Doha' }); break;
+        case '6100': tag(l, { d: 'Operations', c: 'Warehouse', l: 'Doha' }); break;
+        case '6200': tag(l, { d: 'Admin & Finance', c: 'Head office', l: 'Doha' }); break;
+        case '6300': tag(l, { d: 'Sales', c: 'Head office', l: 'Dubai' }); break;
+        case '6400': case '6600': case '6700': case '6900': case '6950': tag(l, { d: 'Admin & Finance', c: 'Head office', l: 'Doha' }); break;
+        case '6500': tag(l, { d: 'Sales', c: 'Site A', l: 'Doha' }); break;
+        case '6800': tag(l, { d: 'Operations', c: 'Site B', l: 'Doha' }); break;
+        case '7000': tag(l, { d: 'Operations', c: 'Warehouse', l: 'Doha' }); break;
+        default: tag(l, { d: 'Admin & Finance', c: 'Head office', l: 'Doha' });
+      }
+    }
+  }
+  // a few journals that only make sense with analysis codes: salary allocation by department, shared cost re-charge, marketing by location
+  const y = new Date().getFullYear(); const m = new Date().getMonth() + 1; const D = (mm, dd) => `${y}-${String(mm).padStart(2, '0')}-${String(dd).padStart(2, '0')}`;
+  const sal = accByCode('6000').id, bank = accByCode('1010').id, mkt = accByCode('6300').id, rent = accByCode('6100').id, ins = accByCode('6700').id, rep = accByCode('6800').id;
+  const L = (accountId, debit, credit, memo, o) => { const l = { accountId, debit, credit, memo }; tag(l, o); return l; };
+  const lock = c.lockDate; c.lockDate = '';
+  for (let mm = Math.max(1, m - 3); mm <= m; mm++) {
+    postJournal({ date: D(mm, Math.min(27, new Date().getDate())), memo: `Salary allocation by department — ${MONTHS[mm - 1]}`, source: 'manual', lines: [
+      L(sal, 0, 8600, 'Reclass from Operations', { d: 'Operations', c: 'Warehouse', l: 'Doha' }), L(sal, 5200, 0, 'Sales team', { d: 'Sales', c: 'Head office', l: 'Doha' }), L(sal, 2100, 0, 'Sales — Dubai rep', { d: 'Sales', c: 'Head office', l: 'Dubai' }), L(sal, 1300, 0, 'Finance & admin', { d: 'Admin & Finance', c: 'Head office', l: 'Doha' })] });
+    postJournal({ date: D(mm, Math.min(28, new Date().getDate())), memo: `Marketing spend — ${MONTHS[mm - 1]}`, source: 'manual', lines: [
+      L(mkt, 1800, 0, 'Google Ads — Doha', { d: 'Sales', c: 'Head office', l: 'Doha' }), L(mkt, 950, 0, 'Trade show — Dubai', { d: 'Sales', c: 'Head office', l: 'Dubai' }), L(bank, 0, 2750, 'Card payment')] });
+  }
+  postJournal({ date: D(m, Math.min(15, new Date().getDate())), memo: 'Site B — generator repair', source: 'manual', lines: [L(rep, 1240, 0, 'Diesel generator service', { d: 'Operations', c: 'Site B', l: 'Doha' }), L(bank, 0, 1240, 'TRF')] });
+  postJournal({ date: D(m, Math.min(10, new Date().getDate())), memo: 'Shared insurance re-charged to cost centres', source: 'manual', lines: [L(ins, 0, 3000, 'Head office pool', { d: 'Admin & Finance', c: 'Head office', l: 'Doha' }), L(ins, 1400, 0, 'Warehouse share', { d: 'Operations', c: 'Warehouse', l: 'Doha' }), L(ins, 900, 0, 'Site A share', { d: 'Operations', c: 'Site A', l: 'Doha' }), L(ins, 700, 0, 'Site B share', { d: 'Operations', c: 'Site B', l: 'Doha' })] });
+  postJournal({ date: D(Math.max(1, m - 1), 1), memo: 'Insurance premium — annual policy (Q share)', source: 'manual', lines: [L(ins, 3000, 0, 'Premium', { d: 'Admin & Finance', c: 'Head office', l: 'Doha' }), L(bank, 0, 3000, 'DD')] });
+  c.lockDate = lock; audit('Sample analysis codes', `${c.dimensions.length} codes, ${n} lines tagged`); return n;
+}
+// seed uses it (replaces the smaller sample from before)
+const _seed7 = seedDemo; seedDemo = function () { _seed7(); const c = C(); c.dimensions = []; c.journals.forEach(j => j.lines.forEach(l => delete l.dims)); loadSampleDimensions(c); save(); };
+// existing demo books saved in the browser: load the sample once so the feature is visible without a reset
+const _load7 = load; load = function () { const ok = _load7(); if (ok) S.companies.forEach(c => { if (c.name === 'Northwind Trading LLC' && !c.dimensions.length && !c._dimSampleLoaded) { const prev = S.activeId; S.activeId = c.id; try { loadSampleDimensions(c); } catch (e) {} c._dimSampleLoaded = true; S.activeId = prev; } }); return ok; };
+const _dimView = VIEWS.dimensions; VIEWS.dimensions = { title: () => 'Analysis codes', body: c => _dimView.body(c).replace('<span class="sp"></span>', `<span class="sp"></span>${c.dimensions.length ? '' : `<button class="btn" onclick="if(guard('settings'))tryDo(()=>loadSampleDimensions(),'Sample analysis codes loaded')">Load sample analysis codes</button>`}`) };
 /* ===================== INIT ===================== */
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 if (!load()) seedDemo(); else S.currentUser = null;
